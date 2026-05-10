@@ -62,32 +62,6 @@ The main components include:
 - systemd timers and services
 - YAML, JSON, SQL
 
-## Repository Structure
-
-```text
-.
-├── api/
-│   └── main.py
-├── worker/
-│   ├── anomaly_engine.py
-│   ├── correlation_engine.py
-│   ├── detection_common.py
-│   ├── discovery_active_scan.py
-│   ├── discovery_nightly_deep_scan.py
-│   ├── enrich_inventory.py
-│   ├── ingest_adguard_logs.py
-│   ├── ingest_opnsense_flows.py
-│   ├── ingest_suricata_alerts.py
-│   ├── policy_enforcer.py
-│   ├── response_engine.py
-│   ├── sync_opnsense.py
-│   ├── sync_vulnerabilities.py
-│   ├── upnp_monitor.py
-│   └── update_geoip_mmdb.py
-├── database_export.sql
-├── home_assistant_dashboard.yaml
-├── services_and_timers_merged.txt
-└── README.md
 
 ## License
 
