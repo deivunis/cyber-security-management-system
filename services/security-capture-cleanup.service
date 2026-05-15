@@ -1,0 +1,13 @@
+[Unit]
+Description=security-core Phase 7 packet capture cleanup
+After=postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/security-core/security-core.env
+Environment=PYTHONPATH=/opt/security-core/app/worker:/opt/security-core/app
+WorkingDirectory=/opt/security-core/app/worker
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/capture_worker.py cleanup --keep-days 14

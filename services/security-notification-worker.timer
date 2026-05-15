@@ -1,0 +1,13 @@
+[Unit]
+Description=Run security-core Phase 7 notification worker every minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=60s
+Persistent=true
+RandomizedDelaySec=10s
+AccuracySec=15s
+Unit=security-notification-worker.service
+
+[Install]
+WantedBy=timers.target

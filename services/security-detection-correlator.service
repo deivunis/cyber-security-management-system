@@ -1,0 +1,12 @@
+[Unit]
+Description=security-core detection correlator
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=securitycore
+Group=securitycore
+EnvironmentFile=/etc/security-core/security-core.env
+WorkingDirectory=/opt/security-core/app/worker
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/correlation_engine.py

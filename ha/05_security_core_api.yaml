@@ -1,0 +1,97 @@
+rest:
+  - resource: "http://REDACTED/health"
+    scan_interval: 10
+    sensor:
+      - name: "Security Core API Health"
+        unique_id: security_core_api_health
+        value_template: "{{ value_json.status }}"
+      - name: "Security Core DB Health"
+        unique_id: security_core_db_health
+        value_template: "{{ value_json.database }}"
+
+  - resource: "http://REDACTED/api/v1/stats/devices"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Total Devices"
+        unique_id: security_core_total_devices
+        value_template: "{{ value_json.total_devices }}"
+      - name: "Security Core Online Devices"
+        unique_id: security_core_online_devices
+        value_template: "{{ value_json.online_devices }}"
+      - name: "Security Core Offline Devices"
+        unique_id: security_core_offline_devices
+        value_template: "{{ value_json.offline_devices }}"
+      - name: "Security Core Quarantined Devices"
+        unique_id: security_core_quarantined_devices
+        value_template: "{{ value_json.quarantined_devices }}"
+      - name: "Security Core Internet Blocked Devices"
+        unique_id: security_core_internet_blocked_devices
+        value_template: "{{ value_json.blocked_internet_devices }}"
+      - name: "Security Core DNS Only Devices"
+        unique_id: security_core_dns_only_devices
+        value_template: "{{ value_json.dns_only_devices }}"
+      - name: "Security Core Unknown Devices"
+        unique_id: security_core_unknown_devices
+        value_template: "{{ value_json.unknown_devices }}"
+      - name: "Security Core Confirmed Devices"
+        unique_id: security_core_confirmed_devices
+        value_template: "{{ value_json.confirmed_devices }}"
+      - name: "Security Core Unconfirmed Devices"
+        unique_id: security_core_unconfirmed_devices
+        value_template: "{{ value_json.unconfirmed_devices }}"
+      - name: "Security Core At Risk Devices"
+        unique_id: security_core_at_risk_devices
+        value_template: "{{ value_json.at_risk_devices }}"
+      - name: "Security Core KEV Devices"
+        unique_id: security_core_kev_devices
+        value_template: "{{ value_json.kev_devices }}"
+      - name: "Security Core Critical Risk Devices"
+        unique_id: security_core_critical_risk_devices
+        value_template: "{{ value_json.critical_risk_devices }}"
+
+  - resource: "http://REDACTED/api/v1/devices?limit=500"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Inventory Raw"
+        unique_id: security_core_inventory_raw
+        value_template: "{{ value_json.total }}"
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/system-health"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 30
+    sensor:
+      - name: "Security Core System Health Raw"
+        unique_id: security_core_system_health_raw
+        value_template: "{{ (value_json.items | length) if value_json.items is defined else 0 }}"
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/stats/vulnerabilities"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 60
+    sensor:
+      - name: "Security Core Open Vulnerability Matches"
+        unique_id: security_core_open_vulnerability_matches
+        value_template: "{{ value_json.open_matches }}"
+      - name: "Security Core KEV Matches"
+        unique_id: security_core_kev_matches
+        value_template: "{{ value_json.kev_matches }}"
+      - name: "Security Core Affected Devices"
+        unique_id: security_core_affected_devices
+        value_template: "{{ value_json.affected_devices }}"
+      - name: "Security Core Highest CVSS"
+        unique_id: security_core_highest_cvss
+        value_template: "{{ value_json.highest_cvss if value_json.highest_cvss is not none else 0 }}"
+

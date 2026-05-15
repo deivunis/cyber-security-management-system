@@ -1,0 +1,680 @@
+rest:
+  - resource: "http://REDACTED/api/v1/stats/incidents"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Open Incidents"
+        unique_id: security_core_open_incidents
+        value_template: "{{ value_json.open_incidents | default(0, true) }}"
+      - name: "Security Core Critical Open Incidents"
+        unique_id: security_core_critical_open_incidents
+        value_template: "{{ value_json.critical_open_incidents | default(0, true) }}"
+      - name: "Security Core High Open Incidents"
+        unique_id: security_core_high_open_incidents
+        value_template: "{{ value_json.high_open_incidents | default(0, true) }}"
+      - name: "Security Core Medium Open Incidents"
+        unique_id: security_core_medium_open_incidents
+        value_template: "{{ value_json.medium_open_incidents | default(0, true) }}"
+      - name: "Security Core Closed Incidents"
+        unique_id: security_core_closed_incidents
+        value_template: "{{ value_json.closed_incidents | default(0, true) }}"
+      - name: "Security Core Incidents Last 24h"
+        unique_id: security_core_incidents_last_24h
+        value_template: "{{ value_json.incidents_last_24h | default(0, true) }}"
+      - name: "Security Core Security Events Last 24h"
+        unique_id: security_core_security_events_last_24h
+        value_template: "{{ value_json.events_last_24h | default(0, true) }}"
+      - name: "Security Core Suricata Alerts Last 24h"
+        unique_id: security_core_suricata_alerts_last_24h
+        value_template: "{{ value_json.suricata_alerts_last_24h | default(0, true) }}"
+      - name: "Security Core DNS Events Last 24h"
+        unique_id: security_core_dns_events_last_24h
+        value_template: "{{ value_json.dns_events_last_24h | default(0, true) }}"
+      - name: "Security Core DNS Blocks Last 24h"
+        unique_id: security_core_dns_blocks_last_24h
+        value_template: "{{ value_json.dns_blocks_last_24h | default(0, true) }}"
+      - name: "Security Core Anomalies Last 24h"
+        unique_id: security_core_anomalies_last_24h
+        value_template: "{{ value_json.anomalies_last_24h | default(0, true) }}"
+      - name: "Security Core Critical Events Last 24h"
+        unique_id: security_core_critical_events_last_24h
+        value_template: "{{ value_json.critical_events_last_24h | default(0, true) }}"
+      - name: "Security Core High Events Last 24h"
+        unique_id: security_core_high_events_last_24h
+        value_template: "{{ value_json.high_events_last_24h | default(0, true) }}"
+      - name: "Security Core Correlations Last 24h"
+        unique_id: security_core_correlations_last_24h
+        value_template: "{{ value_json.correlations_last_24h | default(0, true) }}"
+      - name: "Security Core IDS DNS Correlations Last 24h"
+        unique_id: security_core_ids_dns_correlations_last_24h
+        value_template: "{{ value_json.ids_dns_correlations_last_24h | default(0, true) }}"
+      - name: "Security Core Baseline Anomalies Last 24h"
+        unique_id: security_core_baseline_anomalies_last_24h
+        value_template: "{{ value_json.baseline_anomalies_last_24h | default(0, true) }}"
+      - name: "Security Core Traffic Volume Spikes Last 24h"
+        unique_id: security_core_traffic_volume_spikes_last_24h
+        value_template: "{{ value_json.traffic_volume_spikes_last_24h | default(0, true) }}"
+      - name: "Security Core Outbound Connection Bursts Last 24h"
+        unique_id: security_core_outbound_connection_bursts_last_24h
+        value_template: "{{ value_json.outbound_connection_bursts_last_24h | default(0, true) }}"
+      - name: "Security Core New Destination Countries Last 24h"
+        unique_id: security_core_new_destination_country_events_last_24h
+        value_template: "{{ value_json.new_destination_country_events_last_24h | default(0, true) }}"
+      - name: "Security Core OPNsense Flow Events Last 24h"
+        unique_id: security_core_opnsense_flow_events_last_24h
+        value_template: "{{ value_json.opnsense_flow_events_last_24h | default(0, true) }}"
+      - name: "Security Core OPNsense Flow Bytes Last 24h"
+        unique_id: security_core_opnsense_flow_bytes_last_24h
+        value_template: "{{ value_json.opnsense_flow_bytes_last_24h | default(0, true) }}"
+        unit_of_measurement: "B"
+        device_class: data_size
+        state_class: total
+      - name: "Security Core OPNsense Flow Countries Last 24h"
+        unique_id: security_core_opnsense_flow_countries_last_24h
+        value_template: "{{ value_json.opnsense_flow_countries_last_24h | default(0, true) }}"
+
+  - resource: "http://REDACTED/api/v1/incidents?status=open_like&limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Incidents Raw"
+        unique_id: security_core_incidents_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/incidents?limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 20
+    sensor:
+      - name: "Security Core All Incidents Raw"
+        unique_id: security_core_all_incidents_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/incidents?status=open&limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Open Only Incidents Raw"
+        unique_id: security_core_open_only_incidents_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/incidents?status=acknowledged&limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Acknowledged Incidents Raw"
+        unique_id: security_core_acknowledged_incidents_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/incidents?status=closed&limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 30
+    sensor:
+      - name: "Security Core Closed Incidents Raw"
+        unique_id: security_core_closed_incidents_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/security-events?limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 20
+    sensor:
+      - name: "Security Core Security Events Raw"
+        unique_id: security_core_security_events_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='event_time') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/security-events?source_system=adguard&limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 20
+    sensor:
+      - name: "Security Core AdGuard Events Raw"
+        unique_id: security_core_adguard_events_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='event_time') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/security-events?source_system=suricata&limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 20
+    sensor:
+      - name: "Security Core Suricata Events Raw"
+        unique_id: security_core_suricata_events_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='event_time') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/security-events?source_system=anomaly-engine&limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 30
+    sensor:
+      - name: "Security Core Anomaly Events Raw"
+        unique_id: security_core_anomaly_events_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='event_time') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/security-events?source_system=correlation-engine&limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 30
+    sensor:
+      - name: "Security Core Correlation Events Raw"
+        unique_id: security_core_correlation_events_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='event_time') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/traffic-samples?direction=outbound&limit=150"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 30
+    sensor:
+      - name: "Security Core Traffic Samples Raw"
+        unique_id: security_core_traffic_samples_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='sample_time') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+rest_command:
+  security_core_acknowledge_incident:
+    url: "http://REDACTED/api/v1/incidents/{{ incident_id }}/acknowledge"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set r = reason | default('', true) | trim %}
+      {{ {"actor": "home_assistant", "reason": r} | tojson }}
+
+  security_core_close_incident:
+    url: "http://REDACTED/api/v1/incidents/{{ incident_id }}/close"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set r = reason | default('', true) | trim %}
+      {{ {"actor": "home_assistant", "reason": r} | tojson }}
+
+input_select:
+  security_core_incident_select:
+    name: "Security Core Incident"
+    options:
+      - "No incidents"
+    initial: "No incidents"
+    icon: mdi:alert-octagon
+
+input_text:
+  security_core_incident_action_reason:
+    name: "Security Core Incident Action Reason"
+    max: 180
+
+template:
+  - sensor:
+      - name: "Security Core Open Only Incidents"
+        unique_id: security_core_open_only_incidents
+        state: "{{ state_attr('sensor.security_core_open_only_incidents_raw', 'total') | default(0, true) }}"
+
+      - name: "Security Core Acknowledged Incidents"
+        unique_id: security_core_acknowledged_incidents
+        state: "{{ state_attr('sensor.security_core_acknowledged_incidents_raw', 'total') | default(0, true) }}"
+
+      - name: "Security Core Active Incidents"
+        unique_id: security_core_active_incidents
+        state: "{{ state_attr('sensor.security_core_incidents_raw', 'total') | default(0, true) }}"
+
+      - name: "Security Core Selected Incident ID"
+        unique_id: security_core_selected_incident_id
+        state: >-
+          {% set s = states('input_select.security_core_incident_select') %}
+          {% if ' | ' in s %}
+            {{ s.split(' | ')[-1].strip() }}
+          {% else %}
+            unknown
+          {% endif %}
+
+      - name: "Security Core Selected Incident Title"
+        unique_id: security_core_selected_incident_title
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_incidents_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set value = item.get('title') if item.get('title') else 'Unknown' %}
+              {% set ns.value = value[:240] %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Severity"
+        unique_id: security_core_selected_incident_severity
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_incidents_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ns.value = item.get('severity') if item.get('severity') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Status"
+        unique_id: security_core_selected_incident_status
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_incidents_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ns.value = item.get('status') if item.get('status') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Type"
+        unique_id: security_core_selected_incident_type
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_incidents_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ns.value = item.get('incident_type') if item.get('incident_type') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Source"
+        unique_id: security_core_selected_incident_source
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_incidents_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ns.value = item.get('source_system') if item.get('source_system') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Device"
+        unique_id: security_core_selected_incident_device
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_incidents_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set name = item.get('device_hostname') if item.get('device_hostname') else (item.get('device_vendor') if item.get('device_vendor') else item.get('device_ip')) %}
+              {% set ns.value = name if name else 'Unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value[:240] }}
+
+      - name: "Security Core Selected Incident Device IP"
+        unique_id: security_core_selected_incident_device_ip
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_incidents_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ns.value = item.get('device_ip') if item.get('device_ip') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Event Count"
+        unique_id: security_core_selected_incident_event_count
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_incidents_raw', 'items') or [] %}
+          {% set ns = namespace(value=0) %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ns.value = item.get('event_count') if item.get('event_count') is not none else 0 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Last Seen"
+        unique_id: security_core_selected_incident_last_seen
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_incidents_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ns.value = item.get('last_seen_at') if item.get('last_seen_at') else (item.get('updated_at') if item.get('updated_at') else 'unknown') %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Description"
+        unique_id: security_core_selected_incident_description
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = (state_attr('sensor.security_core_incidents_raw', 'items') or []) + (state_attr('sensor.security_core_all_incidents_raw', 'items') or []) %}
+          {% set ns = namespace(value='') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set text = item.get('description') if item.get('description') else item.get('title') %}
+              {% set ns.value = text[:240] if text else '' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value if ns.value else 'No description' }}
+
+      - name: "Security Core Selected Incident Saved Comment"
+        unique_id: security_core_selected_incident_saved_comment
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = (state_attr('sensor.security_core_incidents_raw', 'items') or []) + (state_attr('sensor.security_core_all_incidents_raw', 'items') or []) %}
+          {% set ns = namespace(value='') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ev = item.get('evidence_json') if item.get('evidence_json') is mapping else {} %}
+              {% set text = ev.get('last_action_reason') or ev.get('acknowledged_reason') or ev.get('closed_reason') or '' %}
+              {% set ns.value = text[:180] if text else '' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value if ns.value else 'No saved comment' }}
+
+      - name: "Security Core Selected Incident Last Action Actor"
+        unique_id: security_core_selected_incident_last_action_actor
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = (state_attr('sensor.security_core_incidents_raw', 'items') or []) + (state_attr('sensor.security_core_all_incidents_raw', 'items') or []) %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ev = item.get('evidence_json') if item.get('evidence_json') is mapping else {} %}
+              {% set ns.value = ev.get('last_action_actor') or ev.get('acknowledged_by') or ev.get('closed_by') or 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Last Action Time"
+        unique_id: security_core_selected_incident_last_action_time
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = (state_attr('sensor.security_core_incidents_raw', 'items') or []) + (state_attr('sensor.security_core_all_incidents_raw', 'items') or []) %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ev = item.get('evidence_json') if item.get('evidence_json') is mapping else {} %}
+              {% set ns.value = ev.get('last_action_at') or 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+script:
+  security_core_refresh_detection_entities:
+    alias: "Security Core Refresh Detection Entities"
+    mode: single
+    sequence:
+      - service: homeassistant.update_entity
+        target:
+          entity_id:
+            - sensor.security_core_open_incidents
+            - sensor.security_core_critical_open_incidents
+            - sensor.security_core_high_open_incidents
+            - sensor.security_core_medium_open_incidents
+            - sensor.security_core_closed_incidents
+            - sensor.security_core_incidents_last_24h
+            - sensor.security_core_security_events_last_24h
+            - sensor.security_core_suricata_alerts_last_24h
+            - sensor.security_core_dns_events_last_24h
+            - sensor.security_core_dns_blocks_last_24h
+            - sensor.security_core_anomalies_last_24h
+            - sensor.security_core_incidents_raw
+            - sensor.security_core_all_incidents_raw
+            - sensor.security_core_open_only_incidents_raw
+            - sensor.security_core_acknowledged_incidents_raw
+            - sensor.security_core_closed_incidents_raw
+            - sensor.security_core_security_events_raw
+            - sensor.security_core_adguard_events_raw
+            - sensor.security_core_suricata_events_raw
+            - sensor.security_core_anomaly_events_raw
+            - sensor.security_core_correlations_last_24h
+            - sensor.security_core_ids_dns_correlations_last_24h
+            - sensor.security_core_baseline_anomalies_last_24h
+            - sensor.security_core_traffic_volume_spikes_last_24h
+            - sensor.security_core_outbound_connection_bursts_last_24h
+            - sensor.security_core_new_destination_countries_last_24h
+            - sensor.security_core_opnsense_flow_events_last_24h
+            - sensor.security_core_opnsense_flow_bytes_last_24h
+            - sensor.security_core_opnsense_flow_countries_last_24h
+            - sensor.security_core_correlation_events_raw
+            - sensor.security_core_traffic_samples_raw
+
+  security_core_acknowledge_selected_incident:
+    alias: "Security Core Acknowledge Selected Incident"
+    mode: single
+    sequence:
+      - variables:
+          selected: "{{ states('input_select.security_core_incident_select') }}"
+          incident_id: >-
+            {% set s = states('input_select.security_core_incident_select') %}
+            {{ s.split(' | ')[-1].strip() if ' | ' in s else '' }}
+          reason: "{{ states('input_text.security_core_incident_action_reason') | default('', true) | trim }}"
+      - choose:
+          - conditions: >-
+              {{ incident_id | regex_match('^[0-9a-fA-F-]{36}$') }}
+            sequence:
+              - service: rest_command.security_core_acknowledge_incident
+                data:
+                  incident_id: "{{ incident_id }}"
+                  reason: "{{ reason }}"
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_detection_entities
+              - delay: "00:00:03"
+              - service: script.security_core_refresh_detection_entities
+              - service: persistent_notification.create
+                data:
+                  title: "Security Core"
+                  message: >-
+                    Incidento patvirtinimo užklausa išsiųsta: {{ incident_id }}. Jei būsena nepasikeičia, patikrink backend atsaką su curl komanda.
+                  notification_id: "security_core_incident_acknowledge_sent"
+        default:
+          - service: persistent_notification.create
+            data:
+              title: "Security Core"
+              message: "Nepavyko patvirtinti: neteisingas pasirinktas incidentas: {{ selected }}"
+              notification_id: "security_core_incident_acknowledge_failed"
+
+  security_core_close_selected_incident:
+    alias: "Security Core Close Selected Incident"
+    mode: single
+    sequence:
+      - variables:
+          selected: "{{ states('input_select.security_core_incident_select') }}"
+          incident_id: >-
+            {% set s = states('input_select.security_core_incident_select') %}
+            {{ s.split(' | ')[-1].strip() if ' | ' in s else '' }}
+          reason: "{{ states('input_text.security_core_incident_action_reason') | default('', true) | trim }}"
+      - choose:
+          - conditions: >-
+              {{ incident_id | regex_match('^[0-9a-fA-F-]{36}$') }}
+            sequence:
+              - service: rest_command.security_core_close_incident
+                data:
+                  incident_id: "{{ incident_id }}"
+                  reason: "{{ reason }}"
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - delay: "00:00:03"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - service: persistent_notification.create
+                data:
+                  title: "Security Core"
+                  message: >-
+                    Incidento uždarymo užklausa išsiųsta: {{ incident_id }}. Jei būsena nepasikeičia, patikrink backend atsaką su curl komanda.
+                  notification_id: "security_core_incident_close_sent"
+        default:
+          - service: persistent_notification.create
+            data:
+              title: "Security Core"
+              message: "Nepavyko uždaryti: neteisingas pasirinktas incidentas: {{ selected }}"
+              notification_id: "security_core_incident_close_failed"
+
+automation:
+  - alias: "Security Core: refresh incident selector"
+    id: security_core_refresh_incident_selector
+    mode: single
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - sensor.security_core_incidents_raw
+          - sensor.security_core_open_only_incidents_raw
+          - sensor.security_core_acknowledged_incidents_raw
+      - platform: time_pattern
+        seconds: "/10"
+    action:
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.security_core_incident_select
+        data:
+          options: >-
+            {% set items = state_attr('sensor.security_core_incidents_raw', 'items') or [] %}
+            {% set ns = namespace(opts=[]) %}
+            {% for item in items %}
+              {% set id = item.get('id') if item.get('id') else 'unknown' %}
+              {% set severity = (item.get('severity') if item.get('severity') else 'unknown') | upper %}
+              {% set status = (item.get('status') if item.get('status') else 'unknown') | upper %}
+              {% set source = item.get('source_system') if item.get('source_system') else 'unknown' %}
+              {% set title = item.get('title') if item.get('title') else item.get('incident_type') %}
+              {% set device = item.get('device_hostname') if item.get('device_hostname') else (item.get('device_ip') if item.get('device_ip') else 'no-device') %}
+              {% set label = severity ~ ' | ' ~ status ~ ' | ' ~ source ~ ' | ' ~ (title[:60] if title else 'incident') ~ ' | ' ~ device ~ ' | ' ~ id %}
+              {% if label not in ns.opts %}
+                {% set ns.opts = ns.opts + [label] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.opts if ns.opts | length > 0 else ['No incidents'] }}
+      - choose:
+          - conditions: >-
+              {% set opts = state_attr('input_select.security_core_incident_select', 'options') or [] %}
+              {{ states('input_select.security_core_incident_select') not in opts }}
+            sequence:
+              - service: input_select.select_first
+                target:
+                  entity_id: input_select.security_core_incident_select
+
+  - alias: "Security Core: load selected incident saved comment"
+    id: security_core_load_selected_incident_saved_comment
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_select.security_core_incident_select
+    action:
+      - delay: "00:00:01"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_incident_action_reason
+        data:
+          value: >-
+            {% set comment = states('sensor.security_core_selected_incident_saved_comment') %}
+            {{ '' if comment in ['unknown', 'unavailable', 'No saved comment'] else comment }}

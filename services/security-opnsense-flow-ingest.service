@@ -1,0 +1,12 @@
+[Unit]
+Description=security-core OPNsense firewall state / traffic flow ingest
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=securitycore
+Group=securitycore
+EnvironmentFile=/etc/security-core/security-core.env
+WorkingDirectory=/opt/security-core/app/worker
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/ingest_opnsense_flows.py

@@ -1,0 +1,462 @@
+input_select:
+  security_core_inventory_device_pretty_select:
+    name: "Security Core Inventory Device (Pretty)"
+    options:
+      - "No devices"
+    initial: "No devices"
+    icon: mdi:devices
+
+automation:
+  - alias: "Security Core: refresh pretty device selector"
+    id: security_core_refresh_pretty_device_selector
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.security_core_inventory_raw
+      - platform: time_pattern
+        seconds: "/10"
+    action:
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.security_core_inventory_device_pretty_select
+        data:
+          options: >
+            {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+            {% set ns = namespace(opts=[]) %}
+            {% for item in items %}
+              {% set ip = item.get('current_ip') if item.get('current_ip') else 'no-ip' %}
+              {% set name = item.get('hostname') if item.get('hostname') else (item.get('vendor') if item.get('vendor') else (item.get('mac_address') if item.get('mac_address') else 'unknown-device')) %}
+              {% set confirmed = 'PATVIRTINTAS' if item.get('identity_confirmed') else 'NEPATVIRTINTAS' %}
+              {% set online = 'ONLINE' if item.get('is_online') else 'OFFLINE' %}
+              {% set label = name ~ ' | ' ~ confirmed ~ ' | ' ~ online ~ ' | ' ~ ip %}
+              {% if label not in ns.opts %}
+                {% set ns.opts = ns.opts + [label] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.opts | sort if ns.opts | length > 0 else ['No devices'] }}
+      - choose:
+          - conditions: >
+              {% set opts = state_attr('input_select.security_core_inventory_device_pretty_select', 'options') or [] %}
+              {{ states('input_select.security_core_inventory_device_pretty_select') not in opts }}
+            sequence:
+              - service: input_select.select_first
+                target:
+                  entity_id: input_select.security_core_inventory_device_pretty_select
+
+template:
+  - sensor:
+      - name: "Security Core Selected Pretty Device IP"
+        unique_id: security_core_selected_pretty_device_ip
+        state: >
+          {% set s = states('input_select.security_core_inventory_device_pretty_select') %}
+          {% if ' | ' in s %}
+            {{ s.split(' | ')[-1].strip() }}
+          {% else %}
+            unknown
+          {% endif %}
+
+      - name: "Security Core Selected Pretty Device ID"
+        unique_id: security_core_selected_pretty_device_id
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('id') if item.get('id') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Name"
+        unique_id: security_core_selected_pretty_device_name
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('hostname') if item.get('hostname') else (item.get('vendor') if item.get('vendor') else (item.get('mac_address') if item.get('mac_address') else 'Unknown')) %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device MAC"
+        unique_id: security_core_selected_pretty_device_mac
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('mac_address') if item.get('mac_address') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Vendor"
+        unique_id: security_core_selected_pretty_device_vendor
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('vendor') if item.get('vendor') else 'Unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Model"
+        unique_id: security_core_selected_pretty_device_model
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('model') if item.get('model') else 'Unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Category"
+        unique_id: security_core_selected_pretty_device_category
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('category') if item.get('category') else 'Unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Firmware"
+        unique_id: security_core_selected_pretty_device_firmware
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('firmware_version') if item.get('firmware_version') else 'Unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Hardware"
+        unique_id: security_core_selected_pretty_device_hardware
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('hardware_version') if item.get('hardware_version') else 'Unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Serial"
+        unique_id: security_core_selected_pretty_device_serial
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('serial_number') if item.get('serial_number') else 'Unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Confidence"
+        unique_id: security_core_selected_pretty_device_confidence
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='0') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('classification_confidence') if item.get('classification_confidence') is not none else 0 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Reason"
+        unique_id: security_core_selected_pretty_device_reason
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('classification_reason') if item.get('classification_reason') else 'Unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Backend Status"
+        unique_id: security_core_selected_pretty_device_backend_status
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('status') if item.get('status') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Effective Status"
+        unique_id: security_core_selected_pretty_device_effective_status
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set q_rows = state_attr('sensor.opnsense_quarantine_list', 'rows') or [] %}
+          {% set b_rows = state_attr('sensor.opnsense_internet_block_list', 'rows') or [] %}
+          {% set q_ns = namespace(ips=[]) %}
+          {% set b_ns = namespace(ips=[]) %}
+          {% for row in q_rows %}
+            {% set addr = row.get('address') or row.get('ip') or row.get('name') %}
+            {% if addr %}
+              {% set q_ns.ips = q_ns.ips + [addr] %}
+            {% endif %}
+          {% endfor %}
+          {% for row in b_rows %}
+            {% set addr = row.get('address') or row.get('ip') or row.get('name') %}
+            {% if addr %}
+              {% set b_ns.ips = b_ns.ips + [addr] %}
+            {% endif %}
+          {% endfor %}
+          {% if ip in q_ns.ips %}
+            quarantined
+          {% elif ip in b_ns.ips %}
+            blocked_internet
+          {% else %}
+            {{ states('sensor.security_core_selected_pretty_device_backend_status') }}
+          {% endif %}
+
+      - name: "Security Core Selected Pretty Device Online"
+        unique_id: security_core_selected_pretty_device_online
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = 'online' if item.get('is_online') else 'offline' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Identity Confirmation"
+        unique_id: security_core_selected_pretty_device_identity_confirmation
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Nepatvirtintas') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = 'Patvirtintas' if item.get('identity_confirmed') else 'Nepatvirtintas' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Last Seen"
+        unique_id: security_core_selected_pretty_device_last_seen
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('last_seen_at') if item.get('last_seen_at') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Sources"
+        unique_id: security_core_selected_pretty_device_sources
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('discovery_sources') | join(', ') if item.get('discovery_sources') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Vulnerability Count"
+        unique_id: security_core_selected_pretty_device_vulnerability_count
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value=0) %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('vulnerability_count') if item.get('vulnerability_count') is not none else 0 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device KEV Count"
+        unique_id: security_core_selected_pretty_device_kev_count
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value=0) %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('kev_count') if item.get('kev_count') is not none else 0 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Highest CVSS"
+        unique_id: security_core_selected_pretty_device_highest_cvss
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value=0) %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('highest_cvss') if item.get('highest_cvss') is not none else 0 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Highest Severity"
+        unique_id: security_core_selected_pretty_device_highest_severity
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='none') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('highest_severity') if item.get('highest_severity') else 'none' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Vulnerability Recommendation"
+        unique_id: security_core_selected_pretty_device_vulnerability_recommendation
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='None') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('vulnerability_recommendation') if item.get('vulnerability_recommendation') else 'None' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Vulnerability Check"
+        unique_id: security_core_selected_pretty_device_vulnerability_check
+        state: >
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('vulnerability_last_checked_at') if item.get('vulnerability_last_checked_at') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+script:
+  security_core_refresh_dashboard_entities:
+    alias: "Security Core Refresh Dashboard Entities"
+    mode: restart
+    sequence:
+      - service: homeassistant.update_entity
+        target:
+          entity_id:
+            - sensor.security_core_inventory_raw
+            - sensor.security_core_total_devices
+            - sensor.security_core_online_devices
+            - sensor.security_core_offline_devices
+            - sensor.security_core_quarantined_devices
+            - sensor.security_core_internet_blocked_devices
+            - sensor.security_core_dns_only_devices
+            - sensor.security_core_unknown_devices
+            - sensor.security_core_confirmed_devices
+            - sensor.security_core_unconfirmed_devices
+            - sensor.security_core_at_risk_devices
+            - sensor.security_core_kev_devices
+            - sensor.security_core_critical_risk_devices
+            - sensor.security_core_open_vulnerability_matches
+            - sensor.security_core_kev_matches
+            - sensor.security_core_affected_devices
+            - sensor.security_core_highest_cvss
+            - sensor.opnsense_quarantine_list
+            - sensor.opnsense_internet_block_list
+
+  security_core_internet_block_selected_add_fast:
+    alias: "Security Core Internet Block Selected Fast Add"
+    mode: restart
+    sequence:
+      - variables:
+          ip: "{{ states('sensor.security_core_selected_pretty_device_ip') }}"
+      - condition: template
+        value_template: "{{ ip not in ['unknown', '', none] }}"
+      - service: script.internet_block_add
+        data:
+          ip: "{{ ip }}"
+      - delay: "00:00:01"
+      - service: script.security_core_refresh_dashboard_entities
+      - delay: "00:00:02"
+      - service: script.security_core_refresh_dashboard_entities
+
+  security_core_internet_block_selected_remove_fast:
+    alias: "Security Core Internet Block Selected Fast Remove"
+    mode: restart
+    sequence:
+      - variables:
+          ip: "{{ states('sensor.security_core_selected_pretty_device_ip') }}"
+      - condition: template
+        value_template: "{{ ip not in ['unknown', '', none] }}"
+      - service: script.internet_block_remove
+        data:
+          ip: "{{ ip }}"
+      - delay: "00:00:01"
+      - service: script.security_core_refresh_dashboard_entities
+      - delay: "00:00:02"
+      - service: script.security_core_refresh_dashboard_entities
+
+  security_core_quarantine_selected_add_fast:
+    alias: "Security Core Quarantine Selected Fast Add"
+    mode: restart
+    sequence:
+      - variables:
+          ip: "{{ states('sensor.security_core_selected_pretty_device_ip') }}"
+      - condition: template
+        value_template: "{{ ip not in ['unknown', '', none] }}"
+      - service: script.quarantine_add
+        data:
+          ip: "{{ ip }}"
+      - delay: "00:00:01"
+      - service: script.security_core_refresh_dashboard_entities
+      - delay: "00:00:02"
+      - service: script.security_core_refresh_dashboard_entities
+
+  security_core_quarantine_selected_remove_fast:
+    alias: "Security Core Quarantine Selected Fast Remove"
+    mode: restart
+    sequence:
+      - variables:
+          ip: "{{ states('sensor.security_core_selected_pretty_device_ip') }}"
+      - condition: template
+        value_template: "{{ ip not in ['unknown', '', none] }}"
+      - service: script.quarantine_remove
+        data:
+          ip: "{{ ip }}"
+      - delay: "00:00:01"
+      - service: script.security_core_refresh_dashboard_entities
+      - delay: "00:00:02"
+      - service: script.security_core_refresh_dashboard_entities

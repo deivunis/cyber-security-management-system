@@ -1,0 +1,1141 @@
+rest:
+  - resource: "http://REDACTED/api/v1/response/stats"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Response Suggested Actions"
+        unique_id: security_core_response_suggested_actions
+        value_template: "{{ value_json.suggested_actions | default(0, true) }}"
+      - name: "Security Core Response Pending Actions"
+        unique_id: security_core_response_pending_actions
+        value_template: "{{ value_json.pending_actions | default(0, true) }}"
+      - name: "Security Core Response Active Actions"
+        unique_id: security_core_response_active_actions
+        value_template: "{{ value_json.active_actions | default(0, true) }}"
+      - name: "Security Core Response Degraded Actions"
+        unique_id: security_core_response_degraded_actions
+        value_template: "{{ value_json.degraded_actions | default(0, true) }}"
+      - name: "Security Core Response Rolled Back Actions"
+        unique_id: security_core_response_rolled_back_actions
+        value_template: "{{ value_json.rolled_back_actions | default(0, true) }}"
+      - name: "Security Core Response Expired Actions"
+        unique_id: security_core_response_expired_actions
+        value_template: "{{ value_json.expired_actions | default(0, true) }}"
+      - name: "Security Core Response Actions Last 24h"
+        unique_id: security_core_response_actions_last_24h
+        value_template: "{{ value_json.actions_last_24h | default(0, true) }}"
+      - name: "Security Core Active Quarantines"
+        unique_id: security_core_active_quarantines
+        value_template: "{{ value_json.active_quarantines | default(0, true) }}"
+      - name: "Security Core Active Internet Blocks"
+        unique_id: security_core_active_internet_blocks
+        value_template: "{{ value_json.active_internet_blocks | default(0, true) }}"
+      - name: "Security Core Active DNS Only Responses"
+        unique_id: security_core_active_dns_only_responses
+        value_template: "{{ value_json.active_dns_only | default(0, true) }}"
+      - name: "Security Core Active Rate Limits"
+        unique_id: security_core_active_rate_limits
+        value_template: "{{ value_json.active_rate_limits | default(0, true) }}"
+      - name: "Security Core Active Dynamic Blocks"
+        unique_id: security_core_active_dynamic_blocks
+        value_template: "{{ value_json.active_dynamic_blocks | default(0, true) }}"
+      - name: "Security Core Active Suppressions"
+        unique_id: security_core_active_suppressions
+        value_template: "{{ value_json.active_suppressions | default(0, true) }}"
+      - name: "Security Core Auto Response Mode"
+        unique_id: security_core_auto_response_mode
+        value_template: "{{ value_json.auto_response_mode | default('unknown', true) }}"
+      - name: "Security Core Response Engine Enabled"
+        unique_id: security_core_response_engine_enabled
+        value_template: "{{ value_json.response_engine_enabled | default(false, true) }}"
+
+  - resource: "http://REDACTED/api/v1/response/settings"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Response Settings Raw"
+        unique_id: security_core_response_settings_raw
+        value_template: >-
+          {% set settings = value_json.settings if value_json is mapping and value_json.settings is mapping else {} %}
+          {{ settings.get('auto_response_mode', 'unknown') }}
+        json_attributes:
+          - items
+          - settings
+
+  - resource: "http://REDACTED/api/v1/response/actions?limit=200"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Response Actions Raw"
+        unique_id: security_core_response_actions_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/response/actions?status=suggested&limit=200"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Suggested Response Actions Raw"
+        unique_id: security_core_suggested_response_actions_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/response/actions?status=active&limit=200"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 10
+    sensor:
+      - name: "Security Core Active Response Actions Raw"
+        unique_id: security_core_active_response_actions_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+  - resource: "http://REDACTED/api/v1/response/suppressions?active_only=false&ignore_only=true&limit=200"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 5
+    sensor:
+      - name: "Security Core Response Suppressions Raw"
+        unique_id: security_core_response_suppressions_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+
+  - resource: "http://REDACTED/api/v1/response/device-overrides?limit=200"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 5
+    sensor:
+      - name: "Security Core Device Response Overrides Raw"
+        unique_id: security_core_device_response_overrides_raw
+        value_template: >-
+          {% set total = value_json.total | default(0, true) %}
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+          {{ total ~ '|' ~ latest }}
+        json_attributes:
+          - items
+          - total
+
+rest_command:
+  security_core_response_set_auto_mode:
+    url: "http://REDACTED/api/v1/response/settings/auto-response-mode/{{ mode }}"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {{ {"updated_by": "home_assistant"} | tojson }}
+
+  security_core_response_run_engine:
+    url: "http://REDACTED/api/v1/response/run"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: "{}"
+
+  security_core_response_apply_incident:
+    url: "http://REDACTED/api/v1/incidents/{{ incident_id }}/response/apply"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set at = action_type | default('', true) | trim %}
+      {% set r = reason | default('', true) | trim %}
+      {% set ttl = ttl_minutes | default(60) | int(60) %}
+      {{ {"action_type": (at if at and at != 'auto' else none), "actor": "home_assistant", "reason": r, "ttl_minutes": ttl} | tojson }}
+
+  security_core_response_rollback_action:
+    url: "http://REDACTED/api/v1/response/actions/{{ action_id }}/rollback"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set r = reason | default('', true) | trim %}
+      {{ {"actor": "home_assistant", "reason": r} | tojson }}
+
+  security_core_response_rollback_incident:
+    url: "http://REDACTED/api/v1/incidents/{{ incident_id }}/response/rollback"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set r = reason | default('', true) | trim %}
+      {{ {"actor": "home_assistant", "reason": r} | tojson }}
+
+  security_core_response_false_positive_incident:
+    url: "http://REDACTED/api/v1/incidents/{{ incident_id }}/false-positive"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set r = reason | default('', true) | trim %}
+      {% set ttl = ttl_hours | default(168) | int(168) %}
+      {{ {"actor": "home_assistant", "reason": r, "ttl_hours": ttl} | tojson }}
+
+  security_core_response_ignore_incident:
+    url: "http://REDACTED/api/v1/incidents/{{ incident_id }}/ignore"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set r = reason | default('', true) | trim %}
+      {% set ttl = ttl_hours | default(168) | int(168) %}
+      {{ {"actor": "home_assistant", "reason": r, "ttl_hours": ttl} | tojson }}
+
+  security_core_response_ignore_incident_force:
+    url: "http://REDACTED/api/v1/incidents/{{ incident_id }}/ignore-force"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set r = reason | default('', true) | trim %}
+      {% set ttl = ttl_hours | default(168) | int(168) %}
+      {{ {"actor": "home_assistant", "reason": r, "ttl_hours": ttl} | tojson }}
+
+
+  security_core_response_ignore_incident_minimal:
+    url: "http://REDACTED/api/v1/incidents/{{ incident_id }}/ignore-minimal"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set r = reason | default('', true) | trim %}
+      {% set ttl = ttl_hours | default(168) | int(168) %}
+      {{ {"actor": "home_assistant", "reason": r, "ttl_hours": ttl} | tojson }}
+
+  security_core_response_create_suppression:
+    url: "http://REDACTED/api/v1/response/suppressions"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set ttl = ttl_hours | default(168) | int(168) %}
+      {% set did = device_id | default('', true) | trim %}
+      {% set typ = incident_type | default('', true) | trim %}
+      {% set src = source_system | default('', true) | trim %}
+      {% set sev = severity | default('', true) | trim %}
+      {% set pat = title_pattern | default('', true) | trim %}
+      {% set r = reason | default('', true) | trim %}
+      {{ {
+        "scope": "incident_pattern",
+        "is_enabled": true,
+        "device_id": (did if did else none),
+        "incident_type": (typ if typ else none),
+        "source_system": (src if src else none),
+        "severity": (sev if sev else none),
+        "title_pattern": (pat if pat else none),
+        "reason": r,
+        "created_by": "home_assistant",
+        "ttl_hours": ttl
+      } | tojson }}
+
+  security_core_response_disable_suppression:
+    url: "http://REDACTED/api/v1/response/suppressions/{{ suppression_id }}"
+    method: DELETE
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+
+  security_core_response_save_device_override:
+    url: "http://REDACTED/api/v1/devices/{{ device_id }}/response-override"
+    method: POST
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {% set ttl = ttl_hours | default(168) | int(168) %}
+      {% set n = notes | default('', true) | trim %}
+      {% set enabled_raw = auto_response_enabled | default(true, true) %}
+      {% set enabled = enabled_raw in [true, 'true', 'True', 'on', '1', 1] %}
+      {% set max_action = max_auto_action | default('notify_only', true) | trim %}
+      {% set preferred = preferred_action | default('notify_only', true) | trim %}
+      {{ {
+        "auto_response_enabled": enabled,
+        "max_auto_action": max_action,
+        "preferred_action": preferred,
+        "suppress_ttl_hours": ttl,
+        "notes": (n if n else "Updated from Home Assistant"),
+        "updated_by": "home_assistant"
+      } | tojson }}
+
+  security_core_response_delete_device_override:
+    url: "http://REDACTED/api/v1/devices/{{ device_id }}/response-override"
+    method: DELETE
+    timeout: 60
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+
+input_boolean:
+  security_core_device_auto_response_enabled:
+    name: "Security Core Device Auto Response Enabled"
+    initial: true
+    icon: mdi:shield-check
+
+input_button:
+  security_core_ignore_selected_incident_type_for_device:
+    name: "Security Core Ignore Selected Incident Type For Device"
+    icon: mdi:bell-cancel
+  security_core_ignore_selected_incident_for_device:
+    name: "Security Core Ignore Selected Incident For Device"
+    icon: mdi:bell-cancel
+  security_core_response_ignore_selected_incident:
+    name: "Security Core Response Ignore Selected Incident"
+    icon: mdi:bell-cancel
+
+input_select:
+  security_core_device_override_max_auto_action:
+    name: "Security Core Device Override Max Auto Action"
+    options:
+      - "notify_only"
+      - "dns_only"
+      - "ip_only"
+      - "rate_limit"
+      - "dynamic_firewall_block"
+      - "internet_block"
+      - "quarantine"
+    initial: "dynamic_firewall_block"
+    icon: mdi:shield-lock-outline
+
+  security_core_device_override_preferred_action:
+    name: "Security Core Device Override Preferred Action"
+    options:
+      - "notify_only"
+      - "dns_only"
+      - "ip_only"
+      - "rate_limit"
+      - "dynamic_firewall_block"
+      - "internet_block"
+      - "quarantine"
+    initial: "dynamic_firewall_block"
+    icon: mdi:shield-star-outline
+
+  security_core_auto_response_mode_select:
+    name: "Security Core Auto Response Mode Select"
+    options:
+      - "off"
+      - "suggest_only"
+      - "auto_low_risk"
+      - "auto_high_risk"
+      - "full_auto"
+    initial: "suggest_only"
+    icon: mdi:shield-cog
+
+  security_core_response_action_type_select:
+    name: "Security Core Response Action Type"
+    options:
+      - "auto"
+      - "notify_only"
+      - "dns_only"
+      - "ip_only"
+      - "rate_limit"
+      - "dynamic_firewall_block"
+      - "internet_block"
+      - "quarantine"
+    initial: "auto"
+    icon: mdi:shield-lightning
+
+  security_core_response_suppression_select:
+    name: "Security Core Response Suppression"
+    options:
+      - "No suppressions"
+    initial: "No suppressions"
+    icon: mdi:bell-off
+
+
+  security_core_response_override_device_select:
+    name: "Security Core Response Override Device Select"
+    options:
+      - "No devices"
+    initial: "No devices"
+    icon: mdi:devices
+
+input_text:
+  security_core_response_action_reason:
+    name: "Security Core Response Action Reason"
+    max: 180
+
+  security_core_response_suppression_reason:
+    name: "Security Core Suppression Reason"
+    max: 180
+
+  security_core_response_suppression_title_pattern:
+    name: "Security Core Suppression Title Pattern"
+    max: 120
+
+  security_core_device_override_notes:
+    name: "Security Core Device Override Notes"
+    max: 180
+
+input_number:
+  security_core_response_ttl_minutes:
+    name: "Security Core Response TTL Minutes"
+    min: 0
+    max: 1440
+    step: 5
+    mode: box
+    initial: 60
+    icon: mdi:timer
+
+  security_core_response_suppression_ttl_hours:
+    name: "Security Core Suppression TTL Hours"
+    min: 1
+    max: 8760
+    step: 1
+    mode: box
+    initial: 168
+    icon: mdi:timer-sand
+
+  security_core_device_override_ttl_hours:
+    name: "Security Core Device Override TTL Hours"
+    min: 1
+    max: 8760
+    step: 1
+    mode: box
+    initial: 168
+    icon: mdi:timer-sand
+
+template:
+  - sensor:
+
+      - name: "Security Core Current Auto Response Mode Tile"
+        unique_id: security_core_current_auto_response_mode_tile
+        icon: mdi:eye
+        state: >-
+          {{ states('sensor.security_core_auto_response_mode') }}
+
+      - name: "Security Core Device Response Overrides"
+        unique_id: security_core_device_response_overrides
+        icon: mdi:shield-account
+        state: >-
+          {% set items = state_attr('sensor.security_core_device_response_overrides_raw', 'items') or [] %}
+          {{ items | length }}
+
+      - name: "Security Core Response Override Selected Device IP"
+        unique_id: security_core_response_override_selected_device_ip
+        icon: mdi:ip-network
+        state: >-
+          {% set s = states('input_select.security_core_response_override_device_select') %}
+          {% if ' | ' in s %}
+            {{ s.split(' | ')[-1].strip() }}
+          {% else %}
+            unknown
+          {% endif %}
+
+      - name: "Security Core Response Override Selected Device ID"
+        unique_id: security_core_response_override_selected_device_id
+        icon: mdi:identifier
+        state: >-
+          {% set ip = states('sensor.security_core_response_override_selected_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('id') if item.get('id') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Response Override Selected Device Name"
+        unique_id: security_core_response_override_selected_device_name
+        icon: mdi:devices
+        state: >-
+          {% set ip = states('sensor.security_core_response_override_selected_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Unknown') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('hostname') if item.get('hostname') else (item.get('vendor') if item.get('vendor') else (item.get('mac_address') if item.get('mac_address') else 'Unknown')) %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Response Override Selected Existing"
+        unique_id: security_core_response_override_selected_existing
+        icon: mdi:shield-account
+        state: >-
+          {% set did = states('sensor.security_core_response_override_selected_device_id') %}
+          {% set items = state_attr('sensor.security_core_device_response_overrides_raw', 'items') or [] %}
+          {% set ns = namespace(value='Nėra override') %}
+          {% for item in items %}
+            {% if item.get('device_id') == did %}
+              {% set enabled = 'įjungta' if item.get('auto_response_enabled') else 'išjungta' %}
+              {% set maxa = item.get('max_auto_action') or '-' %}
+              {% set pref = item.get('preferred_action') or '-' %}
+              {% set ns.value = enabled ~ ' | max: ' ~ maxa ~ ' | pageid.: ' ~ pref %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+      - name: "Security Core Selected Incident Device UUID"
+        unique_id: security_core_selected_incident_device_uuid
+        state: >-
+          {% set id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = (state_attr('sensor.security_core_incidents_raw', 'items') or []) + (state_attr('sensor.security_core_all_incidents_raw', 'items') or []) %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == id %}
+              {% set ns.value = item.get('device_id') if item.get('device_id') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Response Action ID"
+        unique_id: security_core_selected_incident_response_action_id
+        state: >-
+          {% set incident_id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_response_actions_raw', 'items') or [] %}
+          {% set status_order = ['applied', 'active', 'applied_degraded', 'pending', 'approved', 'suggested'] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for st in status_order %}
+            {% for item in items %}
+              {% if ns.value == 'unknown' and item.get('incident_id') == incident_id and item.get('status') == st %}
+                {% set ns.value = item.get('id') if item.get('id') else 'unknown' %}
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Active Response Action ID"
+        unique_id: security_core_selected_incident_active_response_action_id
+        state: >-
+          {% set incident_id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_response_actions_raw', 'items') or [] %}
+          {% set active_statuses = ['applied', 'active', 'applied_degraded', 'pending', 'approved'] %}
+          {% set ns = namespace(value='unknown') %}
+          {% for item in items %}
+            {% if ns.value == 'unknown' and item.get('incident_id') == incident_id and item.get('status') in active_statuses %}
+              {% set ns.value = item.get('id') if item.get('id') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Recommended Action"
+        unique_id: security_core_selected_incident_recommended_action
+        state: >-
+          {% set incident_id = states('sensor.security_core_selected_incident_id') %}
+          {% set items = state_attr('sensor.security_core_response_actions_raw', 'items') or [] %}
+          {% set ns = namespace(value='auto') %}
+          {% for item in items %}
+            {% if item.get('incident_id') == incident_id and item.get('action_type') %}
+              {% set ns.value = item.get('action_type') %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+
+      - name: "Security Core Selected Incident Response Label"
+        unique_id: security_core_selected_incident_response_label
+        state: >-
+          {% set incident_id = states('sensor.security_core_selected_incident_id') %}
+          {% set device_id = states('sensor.security_core_selected_incident_device_uuid') %}
+          {% set incident_type = states('sensor.security_core_selected_incident_type') %}
+          {% set source = states('sensor.security_core_selected_incident_source') %}
+          {% set actions = state_attr('sensor.security_core_response_actions_raw', 'items') or [] %}
+          {% set suppressions = state_attr('sensor.security_core_response_suppressions_raw', 'items') or [] %}
+          {% set active = ['applied','active','applied_degraded','pending','approved'] %}
+          {% set ns = namespace(value='Veiksmų nėra') %}
+          {% for sup in suppressions %}
+            {% set sup_device = sup.get('device_id') or '' %}
+            {% set sup_type = sup.get('incident_type') or '' %}
+            {% set sup_source = sup.get('source_system') or '' %}
+            {% set sup_reason = (sup.get('reason') or '') | lower %}
+            {% if sup.get('is_enabled') and sup_reason.startswith('ignore:') and (not sup_device or sup_device == device_id) and (not sup_type or sup_type == incident_type) and (not sup_source or sup_source == source) %}
+              {% set ns.value = 'Veiksmas ignoruojamas' %}
+            {% endif %}
+          {% endfor %}
+          {% if ns.value != 'Veiksmas ignoruojamas' %}
+            {% for a in actions %}
+              {% if a.get('incident_id') == incident_id and a.get('status') in active %}
+                {% set ns.value = 'Veiksmas: ' ~ (a.get('action_type') or 'unknown') ~ ' (' ~ (a.get('status') or 'unknown') ~ ')' %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+          {% if ns.value == 'Veiksmų nėra' %}
+            {% set sorted_actions = actions | sort(attribute='updated_at', reverse=true) %}
+            {% for a in sorted_actions %}
+              {% if ns.value == 'Veiksmų nėra' and a.get('incident_id') == incident_id and a.get('status') == 'rolled_back' %}
+                {% set ns.value = 'Veiksmas atšauktas: ' ~ (a.get('action_type') or 'unknown') %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+          {% if ns.value == 'Veiksmų nėra' %}
+            {% for a in actions %}
+              {% if ns.value == 'Veiksmų nėra' and a.get('incident_id') == incident_id and a.get('status') == 'suggested' %}
+                {% set ns.value = 'Siūloma: ' ~ (a.get('action_type') or 'unknown') %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Response Status"
+        unique_id: security_core_selected_incident_response_status
+        state: >-
+          {% set action_id = states('sensor.security_core_selected_incident_response_action_id') %}
+          {% set items = state_attr('sensor.security_core_response_actions_raw', 'items') or [] %}
+          {% set ns = namespace(value='no action') %}
+          {% for item in items %}
+            {% if item.get('id') == action_id %}
+              {% set ns.value = item.get('status') if item.get('status') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Incident Response Expires"
+        unique_id: security_core_selected_incident_response_expires
+        state: >-
+          {% set action_id = states('sensor.security_core_selected_incident_response_action_id') %}
+          {% set items = state_attr('sensor.security_core_response_actions_raw', 'items') or [] %}
+          {% set ns = namespace(value='not temporary') %}
+          {% for item in items %}
+            {% if item.get('id') == action_id %}
+              {% set ns.value = item.get('expires_at') if item.get('expires_at') else 'not temporary' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Suppression ID"
+        unique_id: security_core_selected_suppression_id
+        state: >-
+          {% set s = states('input_select.security_core_response_suppression_select') %}
+          {% if ' | ' in s %}
+            {{ s.split(' | ')[-1].strip() }}
+          {% else %}
+            unknown
+          {% endif %}
+
+script:
+  security_core_refresh_response_entities:
+    alias: "Security Core Refresh Response Entities"
+    mode: single
+    sequence:
+      - service: homeassistant.update_entity
+        target:
+          entity_id:
+            - sensor.security_core_response_suggested_actions
+            - sensor.security_core_response_pending_actions
+            - sensor.security_core_response_active_actions
+            - sensor.security_core_response_degraded_actions
+            - sensor.security_core_response_rolled_back_actions
+            - sensor.security_core_response_expired_actions
+            - sensor.security_core_response_actions_last_24h
+            - sensor.security_core_active_quarantines
+            - sensor.security_core_active_internet_blocks
+            - sensor.security_core_active_dns_only_responses
+            - sensor.security_core_active_rate_limits
+            - sensor.security_core_active_dynamic_blocks
+            - sensor.security_core_active_suppressions
+            - sensor.security_core_auto_response_mode
+            - sensor.security_core_response_engine_enabled
+            - sensor.security_core_response_settings_raw
+            - sensor.security_core_response_actions_raw
+            - sensor.security_core_suggested_response_actions_raw
+            - sensor.security_core_active_response_actions_raw
+            - sensor.security_core_response_suppressions_raw
+            - sensor.security_core_device_response_overrides_raw
+            - sensor.security_core_current_auto_response_mode_tile
+            - sensor.security_core_device_response_overrides
+
+  security_core_set_auto_response_mode:
+    alias: "Security Core Set Auto Response Mode"
+    mode: single
+    sequence:
+      - service: rest_command.security_core_response_set_auto_mode
+        data:
+          mode: "{{ states('input_select.security_core_auto_response_mode_select') }}"
+      - delay: "00:00:01"
+      - service: script.security_core_refresh_response_entities
+      - service: persistent_notification.create
+        data:
+          title: "Security Core"
+          message: "Auto-response režimas pakeistas į {{ states('input_select.security_core_auto_response_mode_select') }}."
+          notification_id: "security_core_auto_response_mode_changed"
+
+  security_core_run_response_engine:
+    alias: "Security Core Run Response Engine"
+    mode: single
+    sequence:
+      - service: rest_command.security_core_response_run_engine
+      - delay: "00:00:01"
+      - service: script.security_core_refresh_detection_entities
+      - service: script.security_core_refresh_response_entities
+      - service: persistent_notification.create
+        data:
+          title: "Security Core"
+          message: "Response engine paleistas. Sąrašai atnaujinti."
+          notification_id: "security_core_response_engine_run"
+
+  security_core_apply_selected_incident_response:
+    alias: "Security Core Apply Selected Incident Response"
+    mode: single
+    sequence:
+      - variables:
+          incident_id: "{{ states('sensor.security_core_selected_incident_id') }}"
+          action_type: "{{ states('input_select.security_core_response_action_type_select') }}"
+          reason: "{{ states('input_text.security_core_response_action_reason') | trim }}"
+          ttl: "{{ states('input_number.security_core_response_ttl_minutes') | int(60) }}"
+      - choose:
+          - conditions: "{{ incident_id | regex_match('^[0-9a-fA-F-]{36}$') }}"
+            sequence:
+              - service: rest_command.security_core_response_apply_incident
+                data:
+                  incident_id: "{{ incident_id }}"
+                  action_type: "{{ action_type }}"
+                  reason: "{{ reason }}"
+                  ttl_minutes: "{{ ttl }}"
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - service: persistent_notification.create
+                data:
+                  title: "Security Core"
+                  message: "Veiksmas išsiųstas incidentui {{ incident_id }}. Patikrink aktyvių veiksmų sąrašą."
+                  notification_id: "security_core_response_apply_sent"
+
+  security_core_rollback_selected_incident_response:
+    alias: "Security Core Rollback Selected Incident Response"
+    mode: single
+    sequence:
+      - variables:
+          incident_id: "{{ states('sensor.security_core_selected_incident_id') }}"
+          reason: "{{ states('input_text.security_core_response_action_reason') | trim }}"
+      - choose:
+          - conditions: "{{ incident_id | regex_match('^[0-9a-fA-F-]{36}$') }}"
+            sequence:
+              - service: rest_command.security_core_response_rollback_incident
+                data:
+                  incident_id: "{{ incident_id }}"
+                  reason: "{{ reason }}"
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - service: persistent_notification.create
+                data:
+                  title: "Security Core"
+                  message: "Rollback atliktas: aktyvūs veiksmai atšaukti, o jei incidentas buvo ignoruojamas – ignoravimas pašalintas: {{ incident_id }}."
+                  notification_id: "security_core_response_rollback_sent"
+        default:
+          - service: persistent_notification.create
+            data:
+              title: "Security Core"
+              message: "Nepasirinktas incidentas, kurį būtų galima atšaukti."
+              notification_id: "security_core_response_rollback_missing"
+
+  security_core_mark_selected_incident_false_positive:
+    alias: "Security Core Mark Selected Incident False Positive"
+    mode: single
+    sequence:
+      - variables:
+          incident_id: "{{ states('sensor.security_core_selected_incident_id') }}"
+          reason: "{{ states('input_text.security_core_response_action_reason') | trim }}"
+          ttl: "{{ states('input_number.security_core_device_override_ttl_hours') | int(168) }}"
+      - choose:
+          - conditions: "{{ incident_id | regex_match('^[0-9a-fA-F-]{36}$') }}"
+            sequence:
+              - service: rest_command.security_core_response_false_positive_incident
+                data:
+                  incident_id: "{{ incident_id }}"
+                  reason: "{{ reason }}"
+                  ttl_hours: "{{ ttl }}"
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - service: persistent_notification.create
+                data:
+                  title: "Security Core"
+                  message: "Incidentas pažymėtas kaip false positive: {{ incident_id }}."
+                  notification_id: "security_core_false_positive_sent"
+
+  security_core_ignore_selected_incident_type_for_device:
+    alias: "Security Core Ignore Selected Incident Type For Device"
+    mode: restart
+    sequence:
+      - variables:
+          incident_id: "{{ states('sensor.security_core_selected_incident_id') | trim }}"
+          incident_type: "{{ states('sensor.security_core_selected_incident_type') | trim }}"
+          device_id: "{{ states('sensor.security_core_selected_incident_device_uuid') | trim }}"
+          reason: "{{ states('input_text.security_core_response_action_reason') | trim }}"
+          ttl: "{{ states('input_number.security_core_device_override_ttl_hours') | int(168) }}"
+      - service: persistent_notification.create
+        data:
+          title: "Security Core"
+          message: >-
+            Paspaustas ignoravimo mygtukas. Incidentas={{ incident_id }}, tipas={{ incident_type }}, įrenginys={{ device_id }}.
+          notification_id: "security_core_device_incident_type_ignore_started"
+      - choose:
+          - conditions: "{{ incident_id | regex_match('^[0-9a-fA-F-]{36}$') }}"
+            sequence:
+              - service: rest_command.security_core_response_ignore_incident_minimal
+                data:
+                  incident_id: "{{ incident_id }}"
+                  reason: "{{ reason if reason else 'Ignored from Home Assistant' }}"
+                  ttl_hours: "{{ ttl }}"
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - service: persistent_notification.create
+                data:
+                  title: "Security Core"
+                  message: >-
+                    Ignoravimo užklausa išsiųsta backend'ui. Incidentas turi tapti ignored, o aktyvus ignoravimas turi atsirasti sąraše. Jei taip neįvyko, tikrink security-api logą.
+                  notification_id: "security_core_device_incident_type_ignored"
+        default:
+          - service: persistent_notification.create
+            data:
+              title: "Security Core"
+              message: "Nepavyko ignoruoti: sensor.security_core_selected_incident_id nėra UUID (dabar: {{ incident_id }})."
+              notification_id: "security_core_device_incident_type_ignore_failed"
+
+  security_core_ignore_selected_incident_for_device:
+    alias: "Security Core Ignore Selected Incident For Device"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_ignore_selected_incident:
+    alias: "Security Core Ignore Selected Incident"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_ignore_current_incident:
+    alias: "Security Core Ignore Current Incident"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_ignore_current_incident_for_device:
+    alias: "Security Core Ignore Current Incident For Device"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_ignore_selected_device_incident:
+    alias: "Security Core Ignore Selected Device Incident"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_response_ignore_selected_incident:
+    alias: "Security Core Response Ignore Selected Incident"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_response_ignore_incident_for_device:
+    alias: "Security Core Response Ignore Incident For Device"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+
+  security_core_ignore_selected_incident_type:
+    alias: "Security Core Ignore Selected Incident Type"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_ignore_incident_type_for_selected_device:
+    alias: "Security Core Ignore Incident Type For Selected Device"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_ignore_same_incident_for_device:
+    alias: "Security Core Ignore Same Incident For Device"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_ignore_selected_incident_response:
+    alias: "Security Core Ignore Selected Incident Response"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_ignore_this_incident_for_this_device:
+    alias: "Security Core Ignore This Incident For This Device"
+    mode: restart
+    sequence:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+
+  security_core_clear_selected_incident_ignore:
+    alias: "Security Core Clear Selected Incident Ignore"
+    mode: restart
+    sequence:
+      - service: script.security_core_rollback_selected_incident_response
+
+  security_core_disable_selected_suppression:
+    alias: "Security Core Disable Selected Suppression"
+    mode: single
+    sequence:
+      - variables:
+          suppression_id: "{{ states('sensor.security_core_selected_suppression_id') }}"
+      - choose:
+          - conditions: "{{ suppression_id | regex_match('^[0-9a-fA-F-]{36}$') }}"
+            sequence:
+              - service: rest_command.security_core_response_disable_suppression
+                data:
+                  suppression_id: "{{ suppression_id }}"
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: script.security_core_refresh_detection_entities
+              - service: persistent_notification.create
+                data:
+                  title: "Security Core"
+                  message: "Išimtis išjungta: {{ suppression_id }}."
+                  notification_id: "security_core_suppression_disabled"
+
+
+  security_core_save_selected_device_response_override:
+    alias: "Security Core Save Selected Device Response Override"
+    mode: single
+    sequence:
+      - variables:
+          device_id: "{{ states('sensor.security_core_response_override_selected_device_id') }}"
+          ttl: "{{ states('input_number.security_core_device_override_ttl_hours') | int(168) }}"
+          notes: "{{ states('input_text.security_core_device_override_notes') | trim }}"
+          auto_response_enabled: "{{ is_state('input_boolean.security_core_device_auto_response_enabled', 'on') }}"
+          max_auto_action: "{{ states('input_select.security_core_device_override_max_auto_action') }}"
+          preferred_action: "{{ states('input_select.security_core_device_override_preferred_action') }}"
+      - choose:
+          - conditions: "{{ device_id | regex_match('^[0-9a-fA-F-]{36}$') }}"
+            sequence:
+              - service: rest_command.security_core_response_save_device_override
+                data:
+                  device_id: "{{ device_id }}"
+                  auto_response_enabled: "{{ auto_response_enabled }}"
+                  max_auto_action: "{{ max_auto_action }}"
+                  preferred_action: "{{ preferred_action }}"
+                  ttl_hours: "{{ ttl }}"
+                  notes: "{{ notes if notes else 'Įrenginio auto-response override per Home Assistant' }}"
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: persistent_notification.create
+                data:
+                  title: "Security Core"
+                  message: "Šio įrenginio auto-response override išsaugotas."
+                  notification_id: "security_core_device_response_override_saved"
+        default:
+          - service: persistent_notification.create
+            data:
+              title: "Security Core"
+              message: "Nepavyko išsaugoti override: pasirinktas incidentas neturi įrenginio UUID."
+              notification_id: "security_core_device_response_override_save_failed"
+
+  security_core_delete_selected_device_response_override:
+    alias: "Security Core Delete Selected Device Response Override"
+    mode: single
+    sequence:
+      - variables:
+          device_id: "{{ states('sensor.security_core_response_override_selected_device_id') }}"
+      - choose:
+          - conditions: "{{ device_id | regex_match('^[0-9a-fA-F-]{36}$') }}"
+            sequence:
+              - service: rest_command.security_core_response_delete_device_override
+                data:
+                  device_id: "{{ device_id }}"
+              - delay: "00:00:01"
+              - service: script.security_core_refresh_response_entities
+              - service: persistent_notification.create
+                data:
+                  title: "Security Core"
+                  message: "Šio įrenginio auto-response override pašalintas."
+                  notification_id: "security_core_device_response_override_deleted"
+        default:
+          - service: persistent_notification.create
+            data:
+              title: "Security Core"
+              message: "Nepavyko pašalinti override: pasirinktas incidentas neturi įrenginio UUID."
+              notification_id: "security_core_device_response_override_delete_failed"
+
+automation:
+
+  - alias: "Security Core: ignore selected incident input buttons"
+    id: security_core_ignore_selected_incident_input_buttons
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id:
+          - input_button.security_core_ignore_selected_incident_type_for_device
+          - input_button.security_core_ignore_selected_incident_for_device
+          - input_button.security_core_response_ignore_selected_incident
+    action:
+      - service: script.security_core_ignore_selected_incident_type_for_device
+  - alias: "Security Core: sync auto response mode selector"
+    id: security_core_sync_auto_response_mode_selector
+    mode: restart
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - sensor.security_core_auto_response_mode
+          - sensor.security_core_response_settings_raw
+    action:
+      - delay: "00:00:01"
+      - variables:
+          mode: "{{ states('sensor.security_core_auto_response_mode') }}"
+      - choose:
+          - conditions: "{{ mode in ['off','suggest_only','auto_low_risk','auto_high_risk','full_auto'] }}"
+            sequence:
+              - service: input_select.select_option
+                target:
+                  entity_id: input_select.security_core_auto_response_mode_select
+                data:
+                  option: "{{ mode }}"
+
+
+  - alias: "Security Core: refresh response override device selector"
+    id: security_core_refresh_response_override_device_selector
+    mode: single
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - sensor.security_core_inventory_raw
+      - platform: time_pattern
+        minutes: "/2"
+    action:
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.security_core_response_override_device_select
+        data:
+          options: >-
+            {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+            {% set ns = namespace(opts=[]) %}
+            {% for item in items %}
+              {% set ip = item.get('current_ip') if item.get('current_ip') else 'no-ip' %}
+              {% set name = item.get('hostname') if item.get('hostname') else (item.get('vendor') if item.get('vendor') else (item.get('mac_address') if item.get('mac_address') else 'unknown-device')) %}
+              {% set online = 'ONLINE' if item.get('is_online') else 'OFFLINE' %}
+              {% set label = name ~ ' | ' ~ online ~ ' | ' ~ ip %}
+              {% if label not in ns.opts %}
+                {% set ns.opts = ns.opts + [label] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.opts | sort if ns.opts | length > 0 else ['No devices'] }}
+      - choose:
+          - conditions: >-
+              {% set opts = state_attr('input_select.security_core_response_override_device_select', 'options') or [] %}
+              {{ states('input_select.security_core_response_override_device_select') not in opts }}
+            sequence:
+              - service: input_select.select_first
+                target:
+                  entity_id: input_select.security_core_response_override_device_select
+
+  - alias: "Security Core: refresh response suppression selector"
+    id: security_core_refresh_response_suppression_selector
+    mode: single
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - sensor.security_core_response_suppressions_raw
+      - platform: time_pattern
+        minutes: "/2"
+    action:
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.security_core_response_suppression_select
+        data:
+          options: >-
+            {% set items = state_attr('sensor.security_core_response_suppressions_raw', 'items') or [] %}
+            {% set ns = namespace(opts=[]) %}
+            {% for item in items[:200] %}
+              {% set id = item.get('id') if item.get('id') else 'unknown' %}
+              {% set enabled = 'on' if item.get('is_enabled') else 'off' %}
+              {% set typ = item.get('incident_type') if item.get('incident_type') else 'any-type' %}
+              {% set dev = item.get('device_id') if item.get('device_id') else 'any-device' %}
+              {% set reason = item.get('reason') if item.get('reason') else '' %}
+              {% set label = enabled ~ ' | ' ~ typ[:40] ~ ' | ' ~ dev[:18] ~ ' | ' ~ reason[:50] ~ ' | ' ~ id %}
+              {% if label not in ns.opts %}
+                {% set ns.opts = ns.opts + [label] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.opts if ns.opts | length > 0 else ['No suppressions'] }}
+      - choose:
+          - conditions: >-
+              {% set opts = state_attr('input_select.security_core_response_suppression_select', 'options') or [] %}
+              {{ states('input_select.security_core_response_suppression_select') not in opts }}
+            sequence:
+              - service: input_select.select_first
+                target:
+                  entity_id: input_select.security_core_response_suppression_select

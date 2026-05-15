@@ -1,0 +1,10 @@
+[Unit]
+Description=Run weekly VACUUM FULL for device_observations
+
+[Timer]
+OnCalendar=Sun *-*-* 04:40:00
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

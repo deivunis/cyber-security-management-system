@@ -1,0 +1,13 @@
+[Unit]
+Description=security-core lightweight anomaly engine
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=securitycore
+Group=securitycore
+EnvironmentFile=/etc/security-core/security-core.env
+Environment=PYTHONPATH=/opt/security-core/app/worker:/opt/security-core/app
+WorkingDirectory=/opt/security-core/app/worker
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/anomaly_engine.py

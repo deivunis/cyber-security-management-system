@@ -1,0 +1,13 @@
+[Unit]
+Description=security-core policy template enforcer
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=securitycore
+Group=securitycore
+WorkingDirectory=/opt/security-core/app
+EnvironmentFile=/etc/security-core/security-core.env
+Environment=PYTHONPATH=/opt/security-core/app
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/policy_enforcer.py

@@ -1,0 +1,12 @@
+[Unit]
+Description=Run security-core anomaly engine every 5 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+Persistent=true
+RandomizedDelaySec=30s
+Unit=security-anomaly-engine.service
+
+[Install]
+WantedBy=timers.target

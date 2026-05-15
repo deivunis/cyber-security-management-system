@@ -1,0 +1,12 @@
+[Unit]
+Description=Run security-core weekly HTML report generation
+
+[Timer]
+OnCalendar=Mon *-*-* 06:20:00
+Persistent=true
+RandomizedDelaySec=15m
+AccuracySec=1m
+Unit=security-report-weekly.service
+
+[Install]
+WantedBy=timers.target

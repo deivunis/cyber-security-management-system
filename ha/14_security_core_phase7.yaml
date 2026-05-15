@@ -1,0 +1,618 @@
+# Security Core Phase 7 Home Assistant package
+# Copy to: /config/packages/14_security_core_phase7.yaml
+# Requires in /config/secrets.yaml:
+# security_core_api_bearer: "Bearer YOUR_SECURITY_CORE_API_KEY"
+
+rest:
+  - resource: "http://REDACTED/api/v1/stats/phase7"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 30
+    sensor:
+      - name: "Security Core Audit Events 24h"
+        unique_id: security_core_audit_events_24h
+        value_template: "{{ value_json.audit_events_last_24h | default(0) }}"
+      - name: "Security Core Notifications 24h"
+        unique_id: security_core_notifications_24h
+        value_template: "{{ value_json.notifications_last_24h | default(0) }}"
+      - name: "Security Core Notification Failures 24h"
+        unique_id: security_core_notification_failures_24h
+        value_template: "{{ value_json.notification_failures_last_24h | default(0) }}"
+      - name: "Security Core Generated Reports"
+        unique_id: security_core_generated_reports
+        value_template: "{{ value_json.generated_reports | default(0) }}"
+      - name: "Security Core Running Captures"
+        unique_id: security_core_running_captures
+        value_template: "{{ value_json.running_captures | default(0) }}"
+      - name: "Security Core Captures 24h"
+        unique_id: security_core_captures_24h
+        value_template: "{{ value_json.captures_last_24h | default(0) }}"
+      - name: "Security Core Last Report At"
+        unique_id: security_core_last_report_at
+        value_template: "{{ value_json.last_report_at | default('unknown') }}"
+
+  - resource: "http://REDACTED/api/v1/audit-events?limit=50"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 30
+    sensor:
+      - name: "Security Core Audit Events Raw"
+        unique_id: security_core_audit_events_raw
+        value_template: "{{ value_json.total | default(0) }}"
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/notifications/rules"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 300
+    sensor:
+      - name: "Security Core Notification Rules Raw"
+        unique_id: security_core_notification_rules_raw
+        value_template: "{{ (value_json.items | length) if value_json.items is defined else 0 }}"
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/notifications/deliveries?limit=50"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 30
+    sensor:
+      - name: "Security Core Notification Deliveries Raw"
+        unique_id: security_core_notification_deliveries_raw
+        value_template: "{{ value_json.total | default(0) }}"
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/reports?limit=50"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 30
+    sensor:
+      - name: "Security Core Reports Raw"
+        unique_id: security_core_reports_raw
+        value_template: "{{ value_json.total | default(0) }}"
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/captures?limit=50"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 15
+    sensor:
+      - name: "Security Core Captures Raw"
+        unique_id: security_core_captures_raw
+        value_template: "{{ value_json.total | default(0) }}"
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/exports/links"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 300
+    sensor:
+      - name: "Security Core Export Links Raw"
+        unique_id: security_core_export_links_raw
+        value_template: "{{ (value_json.items | length) if value_json.items is defined else 0 }}"
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/stats/top-risky-devices?limit=10"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 60
+    sensor:
+      - name: "Security Core Top Risky Devices Raw"
+        unique_id: security_core_top_risky_devices_raw
+        value_template: "{{ (value_json.items | length) if value_json.items is defined else 0 }}"
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/stats/geo-communications?hours=24&limit=50"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 60
+    sensor:
+      - name: "Security Core Geo Communications Raw"
+        unique_id: security_core_geo_communications_raw
+        value_template: "{{ (value_json.items | length) if value_json.items is defined else 0 }}"
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/stats/dns-summary?hours=24&limit=50"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 60
+    sensor:
+      - name: "Security Core DNS Summary Raw"
+        unique_id: security_core_dns_summary_raw
+        value_template: "{{ (value_json.items | length) if value_json.items is defined else 0 }}"
+        json_attributes:
+          - items
+
+input_select:
+  security_core_phase7_report_select:
+    name: "Security Core Phase 7 Report"
+    options:
+      - "No reports"
+    initial: "No reports"
+    icon: mdi:file-chart
+
+  security_core_phase7_capture_select:
+    name: "Security Core Phase 7 PCAP"
+    options:
+      - "No captures"
+    initial: "No captures"
+    icon: mdi:download-network
+
+  security_core_phase7_pcap_device_select:
+    name: "Security Core Phase 7 PCAP Device"
+    options:
+      - "No devices"
+    initial: "No devices"
+    icon: mdi:devices
+
+input_number:
+  security_core_pcap_duration_seconds:
+    name: "Security Core PCAP Duration Seconds"
+    min: 10
+    max: 900
+    step: 10
+    initial: 60
+    mode: box
+    icon: mdi:timer-outline
+  security_core_pcap_max_mb:
+    name: "Security Core PCAP Max MB"
+    min: 1
+    max: 500
+    step: 1
+    initial: 50
+    mode: box
+    icon: mdi:harddisk
+
+automation:
+  - alias: "Security Core Phase 7: refresh selectors"
+    id: security_core_phase7_refresh_selectors
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.security_core_reports_raw
+          - sensor.security_core_captures_raw
+          - sensor.security_core_inventory_raw
+      - platform: time_pattern
+        seconds: "/30"
+    action:
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.security_core_phase7_report_select
+        data:
+          options: >
+            {% set items = state_attr('sensor.security_core_reports_raw', 'items') or [] %}
+            {% set ns = namespace(opts=[]) %}
+            {% for item in items %}
+              {% set rid = item.get('id','') %}
+              {% set title = item.get('title','report') %}
+              {% set fmt = item.get('report_format','html') %}
+              {% set created = (item.get('created_at','') | string)[:19] %}
+              {% set label = created ~ ' | ' ~ fmt ~ ' | ' ~ title[:48] ~ ' | ' ~ rid %}
+              {% if rid and label not in ns.opts %}
+                {% set ns.opts = ns.opts + [label] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.opts if ns.opts | length > 0 else ['No reports'] }}
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.security_core_phase7_capture_select
+        data:
+          options: >
+            {% set items = state_attr('sensor.security_core_captures_raw', 'items') or [] %}
+            {% set ns = namespace(opts=[]) %}
+            {% for item in items %}
+              {% set cid = item.get('id','') %}
+              {% set ip = item.get('device_ip','no-ip') %}
+              {% set status = item.get('status','unknown') %}
+              {% set created = (item.get('created_at','') | string)[:19] %}
+              {% set size = item.get('file_size_bytes') if item.get('file_size_bytes') is not none else 0 %}
+              {% set label = created ~ ' | ' ~ status ~ ' | ' ~ ip ~ ' | ' ~ size ~ 'B | ' ~ cid %}
+              {% if cid and status not in ['failed','deleted'] and label not in ns.opts %}
+                {% set ns.opts = ns.opts + [label] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.opts if ns.opts | length > 0 else ['No captures'] }}
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.security_core_phase7_pcap_device_select
+        data:
+          options: >
+            {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+            {% set ns = namespace(opts=[]) %}
+            {% for item in items %}
+              {% set ip = item.get('current_ip') if item.get('current_ip') else 'no-ip' %}
+              {% set did = item.get('id','') %}
+              {% set name = item.get('hostname') if item.get('hostname') else (item.get('vendor') if item.get('vendor') else (item.get('mac_address') if item.get('mac_address') else 'unknown-device')) %}
+              {% set online = 'ONLINE' if item.get('is_online') else 'OFFLINE' %}
+              {% set label = name ~ ' | ' ~ online ~ ' | ' ~ ip ~ ' | ' ~ did %}
+              {% if did and ip != 'no-ip' and label not in ns.opts %}
+                {% set ns.opts = ns.opts + [label] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.opts | sort if ns.opts | length > 0 else ['No devices'] }}
+      - choose:
+          - conditions: >
+              {% set opts = state_attr('input_select.security_core_phase7_report_select', 'options') or [] %}
+              {{ states('input_select.security_core_phase7_report_select') not in opts }}
+            sequence:
+              - service: input_select.select_first
+                target:
+                  entity_id: input_select.security_core_phase7_report_select
+      - choose:
+          - conditions: >
+              {% set opts = state_attr('input_select.security_core_phase7_capture_select', 'options') or [] %}
+              {{ states('input_select.security_core_phase7_capture_select') not in opts }}
+            sequence:
+              - service: input_select.select_first
+                target:
+                  entity_id: input_select.security_core_phase7_capture_select
+      - choose:
+          - conditions: >
+              {% set opts = state_attr('input_select.security_core_phase7_pcap_device_select', 'options') or [] %}
+              {{ states('input_select.security_core_phase7_pcap_device_select') not in opts }}
+            sequence:
+              - service: input_select.select_first
+                target:
+                  entity_id: input_select.security_core_phase7_pcap_device_select
+
+
+  - alias: "Security Core Phase 7: sync selected report"
+    id: security_core_phase7_sync_selected_report
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_select.security_core_phase7_report_select
+    action:
+      - delay: "00:00:01"
+      - service: rest_command.security_core_set_selected_report
+
+  - alias: "Security Core Phase 7: sync selected capture"
+    id: security_core_phase7_sync_selected_capture
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_select.security_core_phase7_capture_select
+    action:
+      - delay: "00:00:01"
+      - service: rest_command.security_core_set_selected_capture
+
+template:
+  - sensor:
+      - name: "Security Core Phase 7 Selected Report ID"
+        unique_id: security_core_phase7_selected_report_id
+        state: >
+          {% set s = states('input_select.security_core_phase7_report_select') %}
+          {% if ' | ' in s %}{{ s.split(' | ')[-1].strip() }}{% else %}unknown{% endif %}
+
+      - name: "Security Core Phase 7 Selected Report Download URL"
+        unique_id: security_core_phase7_selected_report_download_url
+        state: >
+          {% set rid = states('sensor.security_core_phase_7_selected_report_id') %}
+          {% set items = state_attr('sensor.security_core_reports_raw','items') or [] %}
+          {% set ns = namespace(url='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == rid %}
+              {% set ns.url = item.get('download_url') if item.get('download_url') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.url }}
+
+      - name: "Security Core Phase 7 Latest Report Download URL"
+        unique_id: security_core_phase7_latest_report_download_url
+        state: >
+          {% set items = state_attr('sensor.security_core_reports_raw','items') or [] %}
+          {{ items[0].get('download_url') if items | length > 0 and items[0].get('download_url') else 'unknown' }}
+
+      - name: "Security Core Phase 7 Selected Capture ID"
+        unique_id: security_core_phase7_selected_capture_id
+        state: >
+          {% set s = states('input_select.security_core_phase7_capture_select') %}
+          {% if ' | ' in s %}{{ s.split(' | ')[-1].strip() }}{% else %}unknown{% endif %}
+
+      - name: "Security Core Phase 7 Selected Capture Download URL"
+        unique_id: security_core_phase7_selected_capture_download_url
+        state: >
+          {% set cid = states('sensor.security_core_phase_7_selected_capture_id') %}
+          {% set items = state_attr('sensor.security_core_captures_raw','items') or [] %}
+          {% set ns = namespace(url='unknown') %}
+          {% for item in items %}
+            {% if item.get('id') == cid %}
+              {% set ns.url = item.get('download_url') if item.get('download_url') else 'unknown' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.url }}
+
+      - name: "Security Core Phase 7 PCAP Selected Device ID"
+        unique_id: security_core_phase7_pcap_selected_device_id
+        state: >
+          {% set s = states('input_select.security_core_phase7_pcap_device_select') %}
+          {% if ' | ' in s %}{{ s.split(' | ')[-1].strip() }}{% else %}unknown{% endif %}
+
+      - name: "Security Core Phase 7 PCAP Selected Device IP"
+        unique_id: security_core_phase7_pcap_selected_device_ip
+        state: >
+          {% set s = states('input_select.security_core_phase7_pcap_device_select') %}
+          {% if ' | ' in s %}{{ s.split(' | ')[-2].strip() }}{% else %}unknown{% endif %}
+
+      - name: "Security Core Phase 7 Export Incidents URL"
+        unique_id: security_core_phase7_export_incidents_url
+        state: >
+          {% set items = state_attr('sensor.security_core_export_links_raw','items') or [] %}
+          {% set ns = namespace(url='unknown') %}
+          {% for item in items %}{% if item.get('export_type') == 'incidents' %}{% set ns.url = item.get('download_url') %}{% endif %}{% endfor %}
+          {{ ns.url }}
+      - name: "Security Core Phase 7 Export Security Events URL"
+        unique_id: security_core_phase7_export_security_events_url
+        state: >
+          {% set items = state_attr('sensor.security_core_export_links_raw','items') or [] %}
+          {% set ns = namespace(url='unknown') %}
+          {% for item in items %}{% if item.get('export_type') == 'security-events' %}{% set ns.url = item.get('download_url') %}{% endif %}{% endfor %}
+          {{ ns.url }}
+      - name: "Security Core Phase 7 Export Traffic Samples URL"
+        unique_id: security_core_phase7_export_traffic_samples_url
+        state: >
+          {% set items = state_attr('sensor.security_core_export_links_raw','items') or [] %}
+          {% set ns = namespace(url='unknown') %}
+          {% for item in items %}{% if item.get('export_type') == 'traffic-samples' %}{% set ns.url = item.get('download_url') %}{% endif %}{% endfor %}
+          {{ ns.url }}
+      - name: "Security Core Phase 7 Export Audit Events URL"
+        unique_id: security_core_phase7_export_audit_events_url
+        state: >
+          {% set items = state_attr('sensor.security_core_export_links_raw','items') or [] %}
+          {% set ns = namespace(url='unknown') %}
+          {% for item in items %}{% if item.get('export_type') == 'audit-events' %}{% set ns.url = item.get('download_url') %}{% endif %}{% endfor %}
+          {{ ns.url }}
+      - name: "Security Core Phase 7 Export Evidence Bundle URL"
+        unique_id: security_core_phase7_export_evidence_bundle_url
+        state: >
+          {% set items = state_attr('sensor.security_core_export_links_raw','items') or [] %}
+          {% set ns = namespace(url='unknown') %}
+          {% for item in items %}{% if item.get('export_type') == 'evidence-bundle' %}{% set ns.url = item.get('download_url') %}{% endif %}{% endfor %}
+          {{ ns.url }}
+
+
+shell_command:
+  security_core_stage_download_file: >-
+    python3 -c 'import sys,urllib.request,os,pathlib; url=sys.argv[1]; name=sys.argv[2]; roots=[]; env_root=os.environ.get("HASS_CONFIG") or os.environ.get("HOME_ASSISTANT_CONFIG"); [roots.append(x) for x in [env_root,"/config","/homeassistant"] if x and x not in roots]; data=urllib.request.urlopen(urllib.request.Request(url,headers={"User-Agent":"home-assistant-security-core-stage/1.0"}),timeout=240).read(); wrote=[]; [(lambda d: (d.mkdir(parents=True,exist_ok=True),(d/name).write_bytes(data),wrote.append(str(d/name))))(pathlib.Path(root)/"www"/"security-core") for root in roots if pathlib.Path(root).exists()]; print("staged="+",".join(wrote)); sys.exit(0 if wrote else 2)' "{{ url }}" "{{ filename }}"
+
+rest_command:
+  security_core_generate_weekly_report:
+    url: "http://REDACTED/api/v1/reports/generate"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: '{"period_days": 7, "report_type": "weekly", "output_format": "html", "actor": "home-assistant"}'
+
+  security_core_start_pcap_capture:
+    url: "http://REDACTED/api/v1/captures/start"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >
+      {% set s = states('input_select.security_core_phase7_pcap_device_select') %}
+      {% set parts = s.split(' | ') %}
+      {% set ip = parts[-2].strip() if parts | length >= 4 else 'unknown' %}
+      {% set did = parts[-1].strip() if parts | length >= 4 else 'unknown' %}
+      {"device_id": "{{ did }}", "device_ip": "{{ ip }}", "duration_seconds": {{ states('input_number.security_core_pcap_duration_seconds') | int(60) }}, "interface_name": "lan", "max_file_mb": {{ states('input_number.security_core_pcap_max_mb') | int(50) }}, "actor": "home-assistant"}
+
+  security_core_stop_selected_pcap_capture:
+    url: >-
+      {% set s = states('input_select.security_core_phase7_capture_select') %}
+      {% set cid = s.split(' | ')[-1].strip() if ' | ' in s else 'unknown' %}
+      http://REDACTED/api/v1/captures/{{ cid }}/stop
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: '{"actor": "home-assistant"}'
+
+  security_core_set_selected_report:
+    url: "http://REDACTED/api/v1/ui/selection"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >
+      {% set s = states('input_select.security_core_phase7_report_select') %}
+      {% set rid = s.split(' | ')[-1].strip() if ' | ' in s else 'unknown' %}
+      {"selection_type": "report", "object_id": "{{ rid }}", "label": "{{ s | replace('"', '') }}", "actor": "home-assistant"}
+
+  security_core_set_selected_capture:
+    url: "http://REDACTED/api/v1/ui/selection"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >
+      {% set s = states('input_select.security_core_phase7_capture_select') %}
+      {% set cid = s.split(' | ')[-1].strip() if ' | ' in s else 'unknown' %}
+      {"selection_type": "capture", "object_id": "{{ cid }}", "label": "{{ s | replace('"', '') }}", "actor": "home-assistant"}
+
+script:
+  security_core_generate_weekly_report:
+    alias: "Security Core Generate Weekly Report"
+    mode: single
+    sequence:
+      - service: rest_command.security_core_generate_weekly_report
+      - delay: "00:00:05"
+      - service: script.security_core_refresh_phase7_entities
+      - service: persistent_notification.create
+        data:
+          title: "Security Core"
+          message: "Savaitinė HTML ataskaita sugeneruota. Sąrašas netrukus atsinaujins."
+
+  security_core_start_pcap_capture:
+    alias: "Security Core Start PCAP Capture"
+    mode: single
+    sequence:
+      - service: rest_command.security_core_start_pcap_capture
+      - delay: "00:00:03"
+      - service: script.security_core_refresh_phase7_entities
+      - service: persistent_notification.create
+        data:
+          title: "Security Core PCAP"
+          message: "PCAP fiksavimo užklausa išsiųsta."
+
+  security_core_stop_selected_pcap_capture:
+    alias: "Security Core Stop Selected PCAP Capture"
+    mode: single
+    sequence:
+      - service: rest_command.security_core_stop_selected_pcap_capture
+      - delay: "00:00:03"
+      - service: script.security_core_refresh_phase7_entities
+      - service: persistent_notification.create
+        data:
+          title: "Security Core PCAP"
+          message: "PCAP stabdymo užklausa išsiųsta."
+
+  security_core_refresh_phase7_entities:
+    alias: "Security Core Refresh Phase 7 Entities"
+    mode: restart
+    sequence:
+      - service: homeassistant.update_entity
+        target:
+          entity_id:
+            - sensor.security_core_audit_events_24h
+            - sensor.security_core_notifications_24h
+            - sensor.security_core_notification_failures_24h
+            - sensor.security_core_generated_reports
+            - sensor.security_core_running_captures
+            - sensor.security_core_captures_24h
+            - sensor.security_core_last_report_at
+            - sensor.security_core_audit_events_raw
+            - sensor.security_core_notification_rules_raw
+            - sensor.security_core_notification_deliveries_raw
+            - sensor.security_core_reports_raw
+            - sensor.security_core_captures_raw
+            - sensor.security_core_export_links_raw
+            - sensor.security_core_top_risky_devices_raw
+            - sensor.security_core_geo_communications_raw
+            - sensor.security_core_dns_summary_raw
+
+  security_core_stage_selected_report_for_download:
+    alias: "Security Core Stage Selected Report For Download"
+    mode: single
+    sequence:
+      - service: rest_command.security_core_set_selected_report
+      - delay: "00:00:01"
+      - service: shell_command.security_core_stage_download_file
+        data:
+          url: "http://REDACTED/api/v1/public/ui/selected-report/download"
+          filename: "selected-report.html"
+      - service: persistent_notification.create
+        data:
+          title: "Security Core"
+          message: "Pasirinkta ataskaita paruošta: /local/security-core/selected-report.html"
+
+  security_core_stage_latest_report_for_download:
+    alias: "Security Core Stage Latest Report For Download"
+    mode: single
+    sequence:
+      - service: shell_command.security_core_stage_download_file
+        data:
+          url: "http://REDACTED/api/v1/public/ui/latest-report/download"
+          filename: "latest-report.html"
+      - service: persistent_notification.create
+        data:
+          title: "Security Core"
+          message: "Naujausia ataskaita paruošta: /local/security-core/latest-report.html"
+
+  security_core_stage_selected_capture_for_download:
+    alias: "Security Core Stage Selected Capture For Download"
+    mode: single
+    sequence:
+      - service: rest_command.security_core_set_selected_capture
+      - delay: "00:00:01"
+      - service: shell_command.security_core_stage_download_file
+        data:
+          url: "http://REDACTED/api/v1/public/ui/selected-capture/download"
+          filename: "selected-capture.pcap"
+      - service: persistent_notification.create
+        data:
+          title: "Security Core PCAP"
+          message: "Pasirinktas PCAP paruoštas: /local/security-core/selected-capture.pcap"
+
+  security_core_stage_export_incidents:
+    alias: "Security Core Stage Export Incidents"
+    mode: single
+    sequence:
+      - service: shell_command.security_core_stage_download_file
+        data:
+          url: "http://REDACTED/api/v1/public/ui/exports/incidents.csv"
+          filename: "incidents.csv"
+      - service: persistent_notification.create
+        data:
+          title: "Security Core export"
+          message: "Paruošta: /local/security-core/incidents.csv"
+
+  security_core_stage_export_security_events:
+    alias: "Security Core Stage Export Security Events"
+    mode: single
+    sequence:
+      - service: shell_command.security_core_stage_download_file
+        data:
+          url: "http://REDACTED/api/v1/public/ui/exports/security-events.csv"
+          filename: "security-events.csv"
+      - service: persistent_notification.create
+        data:
+          title: "Security Core export"
+          message: "Paruošta: /local/security-core/security-events.csv"
+
+  security_core_stage_export_traffic_samples:
+    alias: "Security Core Stage Export Traffic Samples"
+    mode: single
+    sequence:
+      - service: shell_command.security_core_stage_download_file
+        data:
+          url: "http://REDACTED/api/v1/public/ui/exports/traffic-samples.csv"
+          filename: "traffic-samples.csv"
+      - service: persistent_notification.create
+        data:
+          title: "Security Core export"
+          message: "Paruošta: /local/security-core/traffic-samples.csv"
+
+  security_core_stage_export_audit_events:
+    alias: "Security Core Stage Export Audit Events"
+    mode: single
+    sequence:
+      - service: shell_command.security_core_stage_download_file
+        data:
+          url: "http://REDACTED/api/v1/public/ui/exports/audit-events.csv"
+          filename: "audit-events.csv"
+      - service: persistent_notification.create
+        data:
+          title: "Security Core export"
+          message: "Paruošta: /local/security-core/audit-events.csv"
+
+  security_core_stage_export_evidence_bundle:
+    alias: "Security Core Stage Export Evidence Bundle"
+    mode: single
+    sequence:
+      - service: shell_command.security_core_stage_download_file
+        data:
+          url: "http://REDACTED/api/v1/public/ui/exports/evidence-bundle.json"
+          filename: "evidence-bundle.json"
+      - service: persistent_notification.create
+        data:
+          title: "Security Core export"
+          message: "Paruošta: /local/security-core/evidence-bundle.json"

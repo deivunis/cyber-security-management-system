@@ -1,0 +1,16 @@
+[Unit]
+Description=security-core GeoIP MMDB updater
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=securitycore
+Group=securitycore
+EnvironmentFile=/etc/security-core/security-core.env
+WorkingDirectory=/opt/security-core/app/worker
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/update_geoip_mmdb.py
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/opt/security-core/data /opt/security-core/state

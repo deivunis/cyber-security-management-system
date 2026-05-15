@@ -1,0 +1,13 @@
+[Unit]
+Description=Run security-core active inventory scan every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+AccuracySec=15s
+Persistent=true
+Unit=security-active-scan.service
+
+[Install]
+WantedBy=timers.target

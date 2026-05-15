@@ -1,0 +1,664 @@
+{
+  "default_category": {
+    "category": "unknown",
+    "confidence": 0,
+    "reason": "no_match"
+  },
+  "reserved_ip_categories": {
+    "REDACTED": {
+      "category": "access_point",
+      "confidence": 100,
+      "reason": "reserved_infra_ip"
+    },
+    "REDACTED": {
+      "category": "security_core_server",
+      "confidence": 100,
+      "reason": "reserved_infra_ip"
+    },
+    "REDACTED": {
+      "category": "home_automation_server",
+      "confidence": 100,
+      "reason": "reserved_infra_ip"
+    },
+    "REDACTED": {
+      "category": "hypervisor_server",
+      "confidence": 100,
+      "reason": "reserved_infra_ip"
+    },
+    "REDACTED": {
+      "category": "firewall_router",
+      "confidence": 100,
+      "reason": "reserved_infra_ip"
+    }
+  },
+  "rules": [
+    {
+      "category": "smart_watch",
+      "confidence": 97,
+      "reason": "galaxy_watch_model",
+      "identity_regex_any": [
+        "\\bsm-l\\d{3,4}[a-z0-9/-]*\\b",
+        "\\bsm-r\\d{3,4}[a-z0-9/-]*\\b",
+        "\\bgalaxy[-_ ]?watch\\b"
+      ]
+    },
+    {
+      "category": "smart_light",
+      "confidence": 97,
+      "reason": "tuya_light_signature",
+      "vendor_any": [
+        "tuya"
+      ],
+      "identity_regex_any": [
+        "\\bled\\b",
+        "\\blight\\b",
+        "\\blamp\\b",
+        "\\bbulb\\b",
+        "\\bstrip\\b",
+        "\\bdownlight\\b",
+        "\\bceiling[-_ ]?light\\b"
+      ],
+      "identity_regex_none": [
+        "\\bsmart lock\\b",
+        "\\block\\b",
+        "\\bphone\\b",
+        "\\btablet\\b",
+        "\\bwatch\\b",
+        "\\bcamera\\b"
+      ]
+    },
+    {
+      "category": "smart_light",
+      "confidence": 96,
+      "reason": "smart_light_signature",
+      "identity_regex_any": [
+        "\\bhue\\b",
+        "\\byeelight\\b",
+        "\\bwiz\\b",
+        "\\bnanoleaf\\b",
+        "\\bsmart[-_ ]?light\\b",
+        "\\blightstrip\\b",
+        "\\bbulb\\b"
+      ],
+      "identity_regex_none": [
+        "\\bsmart lock\\b",
+        "\\block\\b",
+        "\\bphone\\b",
+        "\\btablet\\b",
+        "\\bwatch\\b",
+        "\\bcamera\\b"
+      ]
+    },
+    {
+      "category": "smart_plug",
+      "confidence": 97,
+      "reason": "xiaomi_plug_signature",
+      "vendor_any": [
+        "xiaomi"
+      ],
+      "identity_regex_any": [
+        "\\bplug\\b",
+        "\\bsocket\\b",
+        "\\boutlet\\b",
+        "\\bsmart[-_ ]?plug\\b"
+      ],
+      "identity_regex_none": [
+        "\\bphone\\b",
+        "\\btablet\\b",
+        "\\bwatch\\b",
+        "\\blight\\b",
+        "\\bled\\b"
+      ]
+    },
+    {
+      "category": "smart_plug",
+      "confidence": 96,
+      "reason": "smart_plug_signature",
+      "identity_regex_any": [
+        "\\bplug\\b",
+        "\\boutlet\\b",
+        "\\bsocket\\b",
+        "\\bsmart[-_ ]?plug\\b",
+        "\\btapo p\\d+\\b",
+        "\\bkasa (?:hs|kp)\\d+\\b",
+        "\\bmeross mss\\d+\\b"
+      ],
+      "identity_regex_none": [
+        "\\bphone\\b",
+        "\\btablet\\b",
+        "\\bwatch\\b",
+        "\\blight\\b",
+        "\\bled\\b"
+      ]
+    },
+    {
+      "category": "iot_controller",
+      "confidence": 97,
+      "reason": "espressif_controller_family",
+      "vendor_any": [
+        "espressif"
+      ],
+      "identity_regex_any": [
+        "(?:^|[-_ ])esp32(?:[-_ ]|$)",
+        "(?:^|[-_ ])esp8266(?:[-_ ]|$)",
+        "\\btasmota\\b",
+        "\\bwled\\b",
+        "\\besphome\\b",
+        "\\bnodemcu\\b"
+      ],
+      "identity_regex_none": [
+        "\\bphone\\b",
+        "\\btablet\\b",
+        "\\bwatch\\b",
+        "\\bcamera\\b"
+      ]
+    },
+    {
+      "category": "raspberry_pi_host",
+      "confidence": 97,
+      "reason": "raspberry_pi_signature",
+      "identity_regex_any": [
+        "\\braspberrypi\\b",
+        "\\braspberry pi\\b"
+      ]
+    },
+    {
+      "category": "developer_board",
+      "confidence": 95,
+      "reason": "developer_board_signature",
+      "identity_regex_any": [
+        "\\bjetson\\b",
+        "\\bodroid\\b",
+        "\\borange pi\\b",
+        "\\bbanana pi\\b",
+        "\\bbeaglebone\\b"
+      ]
+    },
+    {
+      "category": "docking_station",
+      "confidence": 96,
+      "reason": "docking_station_signature",
+      "identity_regex_any": [
+        "\\bdock\\b",
+        "\\bdocking\\b",
+        "\\bwd19\\b",
+        "\\bwd22\\b",
+        "\\btb16\\b",
+        "\\bthunderbolt dock\\b"
+      ],
+      "identity_regex_none": [
+        "\\bcamera\\b",
+        "\\bcam\\b",
+        "\\bphone\\b"
+      ]
+    },
+    {
+      "category": "laptop_pc",
+      "confidence": 95,
+      "reason": "laptop_hostname_signature",
+      "identity_regex_any": [
+        "\\blaptop\\b",
+        "\\bnotebook\\b",
+        "\\bthinkpad\\b",
+        "\\bmacbook\\b",
+        "\\baspire\\b",
+        "\\bvivobook\\b",
+        "\\blatitude\\b",
+        "\\belitebook\\b",
+        "\\bedubuntu\\b"
+      ],
+      "identity_regex_none": [
+        "\\bcamera\\b",
+        "\\bcam\\b"
+      ]
+    },
+    {
+      "category": "desktop_pc",
+      "confidence": 92,
+      "reason": "desktop_hostname_signature",
+      "identity_regex_any": [
+        "\\bdesktop\\b",
+        "\\bworkstation\\b",
+        "\\bimac\\b"
+      ]
+    },
+    {
+      "category": "camera",
+      "confidence": 97,
+      "reason": "camera_vendor_signature",
+      "vendor_any": [
+        "reolink",
+        "hikvision",
+        "dahua",
+        "imou",
+        "ezviz",
+        "axis communications",
+        "amcrest",
+        "uniview",
+        "annke"
+      ],
+      "identity_regex_none": [
+        "\\bphone\\b",
+        "\\btablet\\b",
+        "\\bwatch\\b",
+        "\\bplug\\b",
+        "\\blight\\b",
+        "\\bled\\b",
+        "\\bdock\\b",
+        "\\braspberry\\b",
+        "\\besp32\\b",
+        "\\besp8266\\b"
+      ]
+    },
+    {
+      "category": "camera",
+      "confidence": 95,
+      "reason": "camera_hostname_signature",
+      "hostname_regex_any": [
+        "(^|[-_])cam([0-9_-]|$)",
+        "(^|[-_])camera([0-9_-]|$)",
+        "\\bipcam\\b",
+        "\\bwebcam\\b"
+      ],
+      "hostname_regex_none": [
+        "\\bsmartcam\\b"
+      ],
+      "identity_regex_none": [
+        "\\bphone\\b",
+        "\\btablet\\b",
+        "\\bwatch\\b",
+        "\\bplug\\b",
+        "\\blight\\b",
+        "\\bled\\b",
+        "\\bdock\\b",
+        "\\braspberry\\b",
+        "\\besp32\\b",
+        "\\besp8266\\b"
+      ]
+    },
+    {
+      "category": "camera",
+      "confidence": 94,
+      "reason": "camera_rtsp_signature",
+      "tcp_ports_any": [
+        554,
+        8554
+      ],
+      "identity_regex_any": [
+        "\\bcam\\b",
+        "\\bcamera\\b",
+        "\\brtsp\\b",
+        "\\bonvif\\b"
+      ],
+      "identity_regex_none": [
+        "\\bphone\\b",
+        "\\btablet\\b",
+        "\\bwatch\\b",
+        "\\bplug\\b",
+        "\\blight\\b",
+        "\\bled\\b",
+        "\\bdock\\b",
+        "\\braspberry\\b",
+        "\\besp32\\b",
+        "\\besp8266\\b"
+      ]
+    },
+    {
+      "category": "mobile_phone",
+      "confidence": 97,
+      "reason": "iphone_family",
+      "identity_regex_any": [
+        "\\biphone\\b"
+      ]
+    },
+    {
+      "category": "mobile_phone",
+      "confidence": 97,
+      "reason": "pixel_phone_family",
+      "identity_regex_any": [
+        "\\bpixel(?:[-_ ]?\\d+[a-z]?)?\\b"
+      ],
+      "identity_regex_none": [
+        "\\btablet\\b",
+        "\\bwatch\\b"
+      ]
+    },
+    {
+      "category": "tablet",
+      "confidence": 96,
+      "reason": "tablet_family",
+      "identity_regex_any": [
+        "\\bipad\\b",
+        "\\btablet\\b",
+        "\\bgalaxy[-_ ]?tab\\b",
+        "\\blenovo[-_ ]?tab\\b",
+        "\\bsm-t\\d{3,4}[a-z0-9/-]*\\b"
+      ]
+    },
+    {
+      "category": "mobile_phone",
+      "confidence": 96,
+      "reason": "samsung_phone_family",
+      "identity_regex_any": [
+        "\\bgalaxy[-_ ]?(?:s|a|z|note)\\d{1,3}(?:[-_ ]?(?:ultra|plus|fe|lite))?\\b",
+        "\\bsm-(?:s|a|n|g|m|f)\\d{3,4}[a-z0-9/-]*\\b",
+        "\\bs(?:20|21|22|23|24|25)(?:[-_ ]?ultra|[-_ ]?plus|[-_ ]?fe)?\\b",
+        "\\ba(?:1[0-9]|2[0-9]|3[0-9]|5[0-9])\\b"
+      ],
+      "identity_regex_none": [
+        "\\bwatch\\b",
+        "\\bgalaxy[-_ ]?watch\\b",
+        "\\btablet\\b",
+        "\\btab\\b",
+        "\\blight\\b",
+        "\\bled\\b",
+        "\\bplug\\b",
+        "\\bdock\\b",
+        "\\bcamera\\b",
+        "\\bsmart lock\\b",
+        "\\block\\b"
+      ]
+    },
+    {
+      "category": "mobile_phone",
+      "confidence": 96,
+      "reason": "xiaomi_phone_family",
+      "identity_regex_any": [
+        "\\bredmi(?:[-_ ]note)?[-_ ]?\\d+[a-z0-9-]*\\b",
+        "\\bpoco[-_ ]?[a-z0-9-]{2,20}\\b",
+        "\\bmi[-_ ]?\\d{1,2}(?:[-_ ]?(?:lite|pro|ultra|se|t))?[a-z0-9-]*\\b",
+        "\\bxiaomi[-_ ]?(?:mi|redmi|poco)?[-_ ]?\\d+[a-z0-9-]*\\b"
+      ],
+      "identity_regex_none": [
+        "\\bplug\\b",
+        "\\bsocket\\b",
+        "\\boutlet\\b",
+        "\\bsmart[-_ ]?plug\\b",
+        "\\blight\\b",
+        "\\bled\\b",
+        "\\blamp\\b",
+        "\\bbulb\\b",
+        "\\bstrip\\b",
+        "\\bdock\\b",
+        "\\bdocking\\b",
+        "\\besp32\\b",
+        "\\besp8266\\b",
+        "\\bcamera\\b",
+        "\\bwatch\\b",
+        "\\btablet\\b"
+      ]
+    },
+    {
+      "category": "unknown_mobile_endpoint",
+      "confidence": 80,
+      "reason": "private_mac_mobile_like",
+      "require_private_mac": true,
+      "identity_regex_any": [
+        "\\biphone\\b",
+        "\\bpixel\\b",
+        "\\bgalaxy\\b",
+        "\\bredmi\\b",
+        "\\bpoco\\b",
+        "\\bphone\\b"
+      ],
+      "identity_regex_none": [
+        "\\bplug\\b",
+        "\\bsocket\\b",
+        "\\boutlet\\b",
+        "\\blight\\b",
+        "\\bled\\b",
+        "\\bdock\\b",
+        "\\bcamera\\b",
+        "\\bwatch\\b",
+        "\\btablet\\b"
+      ]
+    },
+    {
+      "category": "smart_lock",
+      "confidence": 95,
+      "reason": "smart_lock_signature",
+      "identity_regex_any": [
+        "\\bsmart lock\\b",
+        "\\bdoor lock\\b",
+        "\\bnuki\\b",
+        "\\byale\\b",
+        "\\btedee\\b"
+      ]
+    },
+    {
+      "category": "smart_door_controller",
+      "confidence": 95,
+      "reason": "door_controller_signature",
+      "identity_regex_any": [
+        "\\bgarage\\b",
+        "\\bgate\\b",
+        "\\bdoor opener\\b",
+        "\\bdoor controller\\b",
+        "\\brelay door\\b"
+      ]
+    },
+    {
+      "category": "doorbell",
+      "confidence": 95,
+      "reason": "doorbell_signature",
+      "identity_regex_any": [
+        "\\bdoorbell\\b",
+        "\\bvideo bell\\b",
+        "\\bring chime\\b"
+      ]
+    },
+    {
+      "category": "sensor",
+      "confidence": 90,
+      "reason": "generic_sensor_signature",
+      "identity_regex_any": [
+        "\\bsensor\\b",
+        "\\bpir\\b",
+        "\\bcontact\\b",
+        "\\bmotion\\b",
+        "\\btemp\\b",
+        "\\bhumidity\\b",
+        "\\bthermo\\b"
+      ],
+      "identity_regex_none": [
+        "\\bsmart lock\\b",
+        "\\bthermostat\\b"
+      ]
+    },
+    {
+      "category": "weather_station",
+      "confidence": 94,
+      "reason": "weather_station_signature",
+      "identity_regex_any": [
+        "\\bweather\\b",
+        "\\bmeteo\\b",
+        "\\bambient weather\\b",
+        "\\bnetatmo weather\\b"
+      ]
+    },
+    {
+      "category": "robot_vacuum",
+      "confidence": 96,
+      "reason": "robot_vacuum_signature",
+      "identity_regex_any": [
+        "\\broborock\\b",
+        "\\bdreame\\b",
+        "\\bvacuum\\b",
+        "\\broomba\\b",
+        "\\becovacs\\b",
+        "\\bdeebot\\b"
+      ]
+    },
+    {
+      "category": "printer",
+      "confidence": 96,
+      "reason": "printer_signature",
+      "identity_regex_any": [
+        "\\bprinter\\b",
+        "\\blaserjet\\b",
+        "\\bdeskjet\\b",
+        "\\bofficejet\\b",
+        "\\bepson\\b",
+        "\\bbrother\\b"
+      ],
+      "tcp_ports_any": [
+        515,
+        631,
+        9100
+      ]
+    },
+    {
+      "category": "nas_server",
+      "confidence": 96,
+      "reason": "nas_signature",
+      "identity_regex_any": [
+        "\\bsynology\\b",
+        "\\bqnap\\b",
+        "\\btruenas\\b",
+        "\\bopenmediavault\\b",
+        "\\bnas\\b"
+      ],
+      "tcp_ports_any": [
+        139,
+        445,
+        5000,
+        5001
+      ]
+    },
+    {
+      "category": "tv_media",
+      "confidence": 95,
+      "reason": "tv_media_signature",
+      "identity_regex_any": [
+        "\\bwebos\\b",
+        "\\bbravia\\b",
+        "\\bsmart[-_ ]?tv\\b",
+        "\\bsmart tv\\b",
+        "\\boled\\b",
+        "\\bqled\\b",
+        "\\bandroid tv\\b",
+        "\\bgoogle tv\\b"
+      ],
+      "identity_regex_none": [
+        "\\bphone\\b",
+        "\\btablet\\b"
+      ]
+    },
+    {
+      "category": "streaming_device",
+      "confidence": 95,
+      "reason": "streaming_device_signature",
+      "identity_regex_any": [
+        "\\bchromecast\\b",
+        "\\bapple tv\\b",
+        "\\bfire tv\\b",
+        "\\broku\\b",
+        "\\bshield tv\\b"
+      ]
+    },
+    {
+      "category": "assistant_speaker",
+      "confidence": 95,
+      "reason": "assistant_speaker_signature",
+      "identity_regex_any": [
+        "\\becho dot\\b",
+        "\\becho\\b",
+        "\\bgoogle home\\b",
+        "\\bnest mini\\b",
+        "\\bhomepod\\b"
+      ]
+    },
+    {
+      "category": "voice_assistant_display",
+      "confidence": 95,
+      "reason": "assistant_display_signature",
+      "identity_regex_any": [
+        "\\bnest hub\\b",
+        "\\becho show\\b",
+        "\\bsmart display\\b"
+      ]
+    },
+    {
+      "category": "thermostat_hvac",
+      "confidence": 95,
+      "reason": "thermostat_signature",
+      "identity_regex_any": [
+        "\\bthermostat\\b",
+        "\\bhvac\\b",
+        "\\bheat pump\\b",
+        "\\btado\\b",
+        "\\bnest thermostat\\b"
+      ]
+    },
+    {
+      "category": "hub_gateway",
+      "confidence": 95,
+      "reason": "hub_gateway_signature",
+      "identity_regex_any": [
+        "\\bgateway\\b",
+        "\\bhub\\b",
+        "\\baqara hub\\b",
+        "\\btuya hub\\b"
+      ],
+      "identity_regex_none": [
+        "\\brouter\\b",
+        "\\bfirewall\\b",
+        "\\baccess point\\b"
+      ]
+    },
+    {
+      "category": "zigbee_thread_border_router",
+      "confidence": 95,
+      "reason": "zigbee_border_router_signature",
+      "identity_regex_any": [
+        "\\bzigbee\\b",
+        "\\bthread border router\\b",
+        "\\bskyconnect\\b",
+        "\\bsonoff zbdongle\\b"
+      ]
+    },
+    {
+      "category": "game_console",
+      "confidence": 95,
+      "reason": "game_console_signature",
+      "identity_regex_any": [
+        "\\bplaystation\\b",
+        "\\bxbox\\b",
+        "\\bnintendo switch\\b",
+        "\\bsteam deck\\b"
+      ]
+    },
+    {
+      "category": "network_bridge",
+      "confidence": 92,
+      "reason": "network_bridge_signature",
+      "identity_regex_any": [
+        "\\bbridge\\b",
+        "\\brepeater\\b",
+        "\\bextender\\b",
+        "\\bmesh node\\b"
+      ]
+    },
+    {
+      "category": "switch",
+      "confidence": 92,
+      "reason": "switch_signature",
+      "identity_regex_any": [
+        "\\bmikrotik css\\b",
+        "\\bnetgear gs\\d+\\b",
+        "\\btp-link tl-sg\\d+\\b",
+        "\\bmanaged switch\\b"
+      ]
+    },
+    {
+      "category": "network_device",
+      "confidence": 90,
+      "reason": "generic_network_device_signature",
+      "identity_regex_any": [
+        "\\brouter\\b",
+        "\\baccess point\\b",
+        "\\bmesh router\\b"
+      ]
+    }
+  ]
+}

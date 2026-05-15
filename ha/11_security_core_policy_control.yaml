@@ -1,0 +1,797 @@
+input_select:
+  security_core_policy_template_select:
+    name: "Security Core Policy Template"
+    options:
+      - "No policies"
+      - admin_device_policy
+      - camera_policy
+      - guest_device_policy
+      - media_device_policy
+      - sensor_lock_policy
+      - unknown_device_policy
+    initial: "No policies"
+    icon: mdi:shield-key
+
+  security_core_acl_apply_by:
+    name: "Security Core ACL apply by"
+    options:
+      - both
+      - ip
+      - mac
+    initial: both
+    icon: mdi:format-list-bulleted
+
+  security_core_policy_form_scope:
+    name: "Security Core Policy Scope"
+    options:
+      - device_category
+      - manual
+    initial: device_category
+    icon: mdi:shape-outline
+
+  security_core_policy_form_access_mode:
+    name: "Security Core Policy Access Mode"
+    options:
+      - normal
+      - dns_only
+      - local_only
+      - quarantine
+    initial: normal
+    icon: mdi:router-network
+
+input_text:
+  security_core_policy_acl_comment:
+    name: "Security Core ACL Comment"
+    max: 120
+
+  security_core_policy_form_name:
+    name: "Security Core Policy Name"
+    max: 80
+  security_core_policy_form_display_name:
+    name: "Security Core Policy Display Name"
+    max: 120
+  security_core_policy_form_description:
+    name: "Security Core Policy Description"
+    max: 255
+  security_core_policy_form_local_only_peers:
+    name: "Security Core Policy Local-only Peers"
+    max: 255
+  security_core_policy_form_geo_allowed_countries:
+    name: "Security Core Policy Geo Allowed Countries"
+    max: 120
+  security_core_policy_form_auto_assign_categories:
+    name: "Security Core Policy Auto Categories"
+    max: 255
+
+input_boolean:
+  security_core_policy_form_enabled:
+    name: "Security Core Policy Enabled"
+    initial: true
+  security_core_policy_form_internet_allowed:
+    name: "Security Core Policy Internet Allowed"
+    initial: true
+  security_core_policy_form_dns_only:
+    name: "Security Core Policy DNS Only"
+    initial: false
+  security_core_policy_form_local_only:
+    name: "Security Core Policy Local Only"
+    initial: false
+  security_core_policy_form_geo_restrictions_enabled:
+    name: "Security Core Policy Geo Restrictions Enabled"
+    initial: false
+  security_core_policy_form_quarantine_default:
+    name: "Security Core Policy Quarantine Default"
+    initial: false
+  security_core_policy_form_upnp_allowed:
+    name: "Security Core Policy UPNP Allowed"
+    initial: true
+
+rest_command:
+  security_core_assign_policy_selected:
+    url: "http://REDACTED/api/v1/devices/{{ device_id }}/policy-assignment"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {{ {"policy_name": policy_name} | tojson }}
+
+  security_core_clear_policy_selected:
+    url: "http://REDACTED/api/v1/devices/{{ device_id }}/policy-assignment/clear"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: "{}"
+
+  security_core_whitelist_selected:
+    url: "http://REDACTED/api/v1/devices/{{ device_id }}/access-list/whitelist"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {{ {"by": by, "comment": comment | default(none, true)} | tojson }}
+
+  security_core_blacklist_selected:
+    url: "http://REDACTED/api/v1/devices/{{ device_id }}/access-list/blacklist"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {{ {"by": by, "comment": comment | default(none, true)} | tojson }}
+
+  security_core_clear_acl_selected:
+    url: "http://REDACTED/api/v1/devices/{{ device_id }}/access-list/clear"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {{ {"by": by} | tojson }}
+
+  security_core_upsert_policy_template:
+    url: "http://REDACTED/api/v1/policies"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {{ {
+        "policy_name": policy_name,
+        "display_name": display_name,
+        "description": description,
+        "policy_scope": policy_scope,
+        "is_enabled": enabled,
+        "access_mode": access_mode,
+        "internet_allowed": internet_allowed,
+        "dns_only": dns_only,
+        "local_only": local_only,
+        "local_only_peers": [local_only_peers] if local_only_peers not in ['', 'unknown', 'unavailable', '(empty value)', 'empty value', none] else [],
+        "geo_restrictions_enabled": geo_restrictions_enabled,
+        "geo_allowed_countries": [geo_allowed_countries] if geo_allowed_countries not in ['', 'unknown', 'unavailable', '(empty value)', 'empty value', none] else [],
+        "quarantine_default": quarantine_default,
+        "upnp_allowed": upnp_allowed,
+        "auto_assign_categories": [auto_assign_categories] if auto_assign_categories not in ['', 'unknown', 'unavailable', '(empty value)', 'empty value', none] else []
+      } | tojson }}
+
+  security_core_delete_policy_template:
+    url: "http://REDACTED/api/v1/policies/{{ policy_name }}"
+    method: DELETE
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+
+
+automation:
+  - alias: "Security Core: refresh policy template selector"
+    id: security_core_refresh_policy_template_selector
+    mode: single
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - sensor.security_core_policy_templates_raw
+          - sensor.security_core_total_policies
+      - platform: time_pattern
+        seconds: "/15"
+    action:
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.security_core_policy_template_select
+        data:
+          options: >-
+            {% set items = state_attr('sensor.security_core_policy_templates_raw', 'items') or [] %}
+            {% set ns = namespace(opts=[]) %}
+            {% for item in items %}
+              {% set name = item.get('policy_name') if item.get('policy_name') else none %}
+              {% if name and name not in ns.opts %}
+                {% set ns.opts = ns.opts + [name] %}
+              {% endif %}
+            {% endfor %}
+            {% set current_opts = state_attr('input_select.security_core_policy_template_select', 'options') or [] %}
+            {{ (['No policies'] + (ns.opts | sort)) if ns.opts | length > 0 else (current_opts if current_opts | length > 1 else ['No policies', 'admin_device_policy', 'camera_policy', 'guest_device_policy', 'media_device_policy', 'sensor_lock_policy', 'unknown_device_policy']) }}
+      - choose:
+          - conditions: >-
+              {% set opts = state_attr('input_select.security_core_policy_template_select', 'options') or [] %}
+              {{ states('input_select.security_core_policy_template_select') not in opts }}
+            sequence:
+              - service: input_select.select_first
+                target:
+                  entity_id: input_select.security_core_policy_template_select
+
+  - alias: "Security Core: load selected policy form on selector change"
+    id: security_core_load_selected_policy_form_on_selector_change
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: input_select.security_core_policy_template_select
+    action:
+      - choose:
+          - conditions: >-
+              {{ states('input_select.security_core_policy_template_select') not in ['unknown', 'unavailable', '', 'No policies'] }}
+            sequence:
+              - service: script.security_core_load_selected_policy_form
+        default:
+          - service: script.security_core_clear_policy_form
+
+
+  - alias: "Security Core: sync ACL comment form"
+    id: security_core_sync_acl_comment_form
+    mode: restart
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - sensor.security_core_access_control_lists_raw
+          - sensor.security_core_selected_pretty_device_id
+          - sensor.security_core_selected_pretty_device_ip
+          - sensor.security_core_selected_pretty_device_mac
+    action:
+      - service: script.security_core_reload_policy_acl_comment
+
+template:
+  - sensor:
+      - name: "Security Core Selected Pretty Device Active Policy"
+        unique_id: security_core_selected_pretty_device_active_policy
+        state: >-
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='none') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('active_policy') if item.get('active_policy') else 'none' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Policy Source"
+        unique_id: security_core_selected_pretty_device_policy_source
+        state: >-
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='none') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('policy_source') if item.get('policy_source') else 'none' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Policy Suggested"
+        unique_id: security_core_selected_pretty_device_policy_suggested
+        state: >-
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='none') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('policy_suggested') if item.get('policy_suggested') else 'none' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Policy Mode"
+        unique_id: security_core_selected_pretty_device_policy_mode
+        state: >-
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='normal') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = item.get('policy_effective_mode') if item.get('policy_effective_mode') else 'normal' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Whitelist"
+        unique_id: security_core_selected_pretty_device_whitelist
+        state: >-
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Ne') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = 'Taip' if item.get('acl_whitelisted') else 'Ne' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Blacklist"
+        unique_id: security_core_selected_pretty_device_blacklist
+        state: >-
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Ne') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = 'Taip' if item.get('acl_blacklisted') else 'Ne' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device ACL Comment"
+        unique_id: security_core_selected_pretty_device_acl_comment
+        state: >-
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='(empty value)') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set raw = item.get('acl_last_comment') %}
+              {% set ns.value = raw if raw not in [none, 'None', ''] else '(empty value)' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device Geo Restriction"
+        unique_id: security_core_selected_pretty_device_geo_restriction
+        state: >-
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Ne') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = 'Taip' if item.get('geo_restrictions_enabled') else 'Ne' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+      - name: "Security Core Selected Pretty Device UPNP Blocked"
+        unique_id: security_core_selected_pretty_device_upnp_blocked
+        state: >-
+          {% set ip = states('sensor.security_core_selected_pretty_device_ip') %}
+          {% set items = state_attr('sensor.security_core_inventory_raw', 'items') or [] %}
+          {% set ns = namespace(value='Ne') %}
+          {% for item in items %}
+            {% if item.get('current_ip') == ip %}
+              {% set ns.value = 'Taip' if item.get('upnp_blocked') else 'Ne' %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.value }}
+
+script:
+  security_core_reload_policy_acl_comment:
+    alias: "Security Core Reload Policy ACL Comment"
+    mode: restart
+    sequence:
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_policy_acl_comment
+        data:
+          value: >-
+            {% set value = states('sensor.security_core_selected_pretty_device_acl_comment') %}
+            {{ value if value not in ['unknown', 'unavailable', none, 'None', ''] else '(empty value)' }}
+
+  security_core_clear_policy_form:
+    alias: "Security Core Clear Policy Form"
+    mode: restart
+    sequence:
+      - service: input_text.set_value
+        target:
+          entity_id:
+            - input_text.security_core_policy_form_name
+            - input_text.security_core_policy_form_display_name
+            - input_text.security_core_policy_form_description
+            - input_text.security_core_policy_form_local_only_peers
+            - input_text.security_core_policy_form_geo_allowed_countries
+            - input_text.security_core_policy_form_auto_assign_categories
+        data:
+          value: ""
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.security_core_policy_form_scope
+        data:
+          option: device_category
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.security_core_policy_form_access_mode
+        data:
+          option: normal
+      - service: input_boolean.turn_on
+        target:
+          entity_id:
+            - input_boolean.security_core_policy_form_enabled
+            - input_boolean.security_core_policy_form_internet_allowed
+            - input_boolean.security_core_policy_form_upnp_allowed
+      - service: input_boolean.turn_off
+        target:
+          entity_id:
+            - input_boolean.security_core_policy_form_dns_only
+            - input_boolean.security_core_policy_form_local_only
+            - input_boolean.security_core_policy_form_geo_restrictions_enabled
+            - input_boolean.security_core_policy_form_quarantine_default
+
+  security_core_load_selected_policy_form:
+    alias: "Security Core Load Selected Policy Form"
+    mode: restart
+    sequence:
+      - variables:
+          selected: "{{ states('input_select.security_core_policy_template_select') }}"
+          items: "{{ state_attr('sensor.security_core_policy_templates_raw', 'items') or [] }}"
+      - variables:
+          item: >-
+            {% set ns = namespace(found=none) %}
+            {% for entry in items %}
+              {% if entry.get('policy_name') == selected %}
+                {% set ns.found = entry %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.found }}
+      - condition: template
+        value_template: "{{ item not in [none, 'None', ''] and selected not in ['No policies', 'unknown', 'unavailable', ''] }}"
+      - variables:
+          pj: "{{ item.get('policy_json') or {} }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_policy_form_name
+        data:
+          value: "{{ item.get('policy_name') if item.get('policy_name') else '' }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_policy_form_display_name
+        data:
+          value: "{{ pj.get('display_name') if pj.get('display_name') else '' }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_policy_form_description
+        data:
+          value: "{{ pj.get('description') if pj.get('description') else '' }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_policy_form_local_only_peers
+        data:
+          value: "{{ (pj.get('local_only_peers') or []) | join(', ') }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_policy_form_geo_allowed_countries
+        data:
+          value: "{{ (pj.get('geo_allowed_countries') or []) | join(', ') }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_policy_form_auto_assign_categories
+        data:
+          value: "{{ (pj.get('auto_assign_categories') or []) | join(', ') }}"
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.security_core_policy_form_scope
+        data:
+          option: "{{ item.get('policy_scope') if item.get('policy_scope') in ['device_category', 'manual'] else 'device_category' }}"
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.security_core_policy_form_access_mode
+        data:
+          option: "{{ pj.get('access_mode') if pj.get('access_mode') in ['normal', 'dns_only', 'local_only', 'quarantine'] else 'normal' }}"
+      - choose:
+          - conditions: "{{ item.get('is_enabled', true) }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.security_core_policy_form_enabled
+        default:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.security_core_policy_form_enabled
+      - choose:
+          - conditions: "{{ pj.get('internet_allowed', true) }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.security_core_policy_form_internet_allowed
+        default:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.security_core_policy_form_internet_allowed
+      - choose:
+          - conditions: "{{ pj.get('dns_only', false) }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.security_core_policy_form_dns_only
+        default:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.security_core_policy_form_dns_only
+      - choose:
+          - conditions: "{{ pj.get('local_only', false) }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.security_core_policy_form_local_only
+        default:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.security_core_policy_form_local_only
+      - choose:
+          - conditions: "{{ pj.get('geo_restrictions_enabled', false) }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.security_core_policy_form_geo_restrictions_enabled
+        default:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.security_core_policy_form_geo_restrictions_enabled
+      - choose:
+          - conditions: "{{ pj.get('quarantine_default', false) }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.security_core_policy_form_quarantine_default
+        default:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.security_core_policy_form_quarantine_default
+      - choose:
+          - conditions: "{{ pj.get('upnp_allowed', true) }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.security_core_policy_form_upnp_allowed
+        default:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.security_core_policy_form_upnp_allowed
+
+  security_core_save_policy_template:
+    alias: "Security Core Save Policy Template"
+    mode: restart
+    sequence:
+      - variables:
+          policy_name: "{{ states('input_text.security_core_policy_form_name') }}"
+          display_name: "{{ states('input_text.security_core_policy_form_display_name') }}"
+          description: "{{ states('input_text.security_core_policy_form_description') }}"
+          policy_scope: "{{ states('input_select.security_core_policy_form_scope') }}"
+          access_mode: "{{ states('input_select.security_core_policy_form_access_mode') }}"
+          enabled: "{{ is_state('input_boolean.security_core_policy_form_enabled', 'on') }}"
+          internet_allowed: "{{ is_state('input_boolean.security_core_policy_form_internet_allowed', 'on') }}"
+          dns_only: "{{ is_state('input_boolean.security_core_policy_form_dns_only', 'on') }}"
+          local_only: "{{ is_state('input_boolean.security_core_policy_form_local_only', 'on') }}"
+          local_only_peers: "{{ states('input_text.security_core_policy_form_local_only_peers') }}"
+          geo_restrictions_enabled: "{{ is_state('input_boolean.security_core_policy_form_geo_restrictions_enabled', 'on') }}"
+          geo_allowed_countries: "{{ states('input_text.security_core_policy_form_geo_allowed_countries') }}"
+          quarantine_default: "{{ is_state('input_boolean.security_core_policy_form_quarantine_default', 'on') }}"
+          upnp_allowed: "{{ is_state('input_boolean.security_core_policy_form_upnp_allowed', 'on') }}"
+          auto_assign_categories: "{{ states('input_text.security_core_policy_form_auto_assign_categories') }}"
+          expected_policy_name: >-
+            {% set raw = policy_name if policy_name not in ['unknown', 'unavailable', '', none] else display_name %}
+            {% set value = (raw | string | lower | replace('-', '_') | replace(' ', '_') | regex_replace('[^a-z0-9_]+', '') | regex_replace('_+', '_')) %}
+            {{ value.strip('_') }}
+      - condition: template
+        value_template: "{{ policy_name not in ['unknown', 'unavailable', '', none] or display_name not in ['unknown', 'unavailable', '', none] }}"
+      - service: rest_command.security_core_upsert_policy_template
+        data:
+          policy_name: "{{ policy_name if policy_name not in ['unknown', 'unavailable', '', none] else display_name }}"
+          display_name: "{{ display_name if display_name not in ['unknown', 'unavailable', '', none] else none }}"
+          description: "{{ description if description not in ['unknown', 'unavailable', '', none, '(empty value)'] else none }}"
+          policy_scope: "{{ policy_scope }}"
+          enabled: "{{ enabled }}"
+          access_mode: "{{ access_mode }}"
+          internet_allowed: "{{ internet_allowed }}"
+          dns_only: "{{ dns_only }}"
+          local_only: "{{ local_only }}"
+          local_only_peers: "{{ local_only_peers if local_only_peers not in ['unknown', 'unavailable', '', none, '(empty value)'] else none }}"
+          geo_restrictions_enabled: "{{ geo_restrictions_enabled }}"
+          geo_allowed_countries: "{{ geo_allowed_countries if geo_allowed_countries not in ['unknown', 'unavailable', '', none, '(empty value)'] else none }}"
+          quarantine_default: "{{ quarantine_default }}"
+          upnp_allowed: "{{ upnp_allowed }}"
+          auto_assign_categories: "{{ auto_assign_categories if auto_assign_categories not in ['unknown', 'unavailable', '', none, '(empty value)'] else none }}"
+      - service: homeassistant.update_entity
+        target:
+          entity_id:
+            - sensor.security_core_policy_templates_raw
+            - sensor.security_core_total_policies
+      - delay: "00:00:02"
+      - service: homeassistant.update_entity
+        target:
+          entity_id: sensor.security_core_policy_templates_raw
+      - delay: "00:00:02"
+      - service: automation.trigger
+        target:
+          entity_id: automation.security_core_refresh_policy_template_selector
+      - wait_template: >-
+          {% set opts = state_attr('input_select.security_core_policy_template_select', 'options') or [] %}
+          {{ expected_policy_name in opts }}
+        timeout: "00:00:10"
+        continue_on_timeout: true
+      - choose:
+          - conditions: >-
+              {% set opts = state_attr('input_select.security_core_policy_template_select', 'options') or [] %}
+              {{ expected_policy_name in opts }}
+            sequence:
+              - service: input_select.select_option
+                target:
+                  entity_id: input_select.security_core_policy_template_select
+                data:
+                  option: "{{ expected_policy_name }}"
+              - delay: "00:00:01"
+              - service: script.security_core_load_selected_policy_form
+      - service: script.security_core_refresh_policy_entities
+
+
+  security_core_delete_selected_policy:
+    alias: "Security Core Delete Selected Policy"
+    mode: restart
+    sequence:
+      - variables:
+          selected_name: >-
+            {% set form_name = states('input_text.security_core_policy_form_name') %}
+            {% set picked = states('input_select.security_core_policy_template_select') %}
+            {{ form_name if form_name not in ['unknown', 'unavailable', '', none] else picked }}
+      - condition: template
+        value_template: "{{ selected_name not in ['unknown', 'unavailable', '', none, 'No policies'] }}"
+      - service: rest_command.security_core_delete_policy_template
+        data:
+          policy_name: "{{ selected_name }}"
+      - delay: "00:00:02"
+      - service: homeassistant.update_entity
+        target:
+          entity_id:
+            - sensor.security_core_policy_templates_raw
+            - sensor.security_core_total_policies
+      - delay: "00:00:02"
+      - service: automation.trigger
+        target:
+          entity_id: automation.security_core_refresh_policy_template_selector
+      - delay: "00:00:01"
+      - service: script.security_core_clear_policy_form
+      - service: script.security_core_refresh_policy_entities
+
+
+  security_core_refresh_policy_entities:
+    alias: "Security Core Refresh Policy Entities"
+    mode: restart
+    sequence:
+      - service: homeassistant.update_entity
+        target:
+          entity_id:
+            - sensor.security_core_inventory_raw
+            - sensor.security_core_access_control_lists_raw
+            - sensor.security_core_total_policies
+            - sensor.security_core_manual_assigned_devices
+            - sensor.security_core_auto_assigned_devices
+            - sensor.security_core_whitelisted_devices
+            - sensor.security_core_blacklisted_devices
+            - sensor.security_core_local_only_devices
+            - sensor.security_core_geo_restricted_devices
+            - sensor.security_core_upnp_blocked_devices
+            - sensor.security_core_policy_templates_raw
+            - sensor.opnsense_quarantine_list
+            - sensor.opnsense_internet_block_list
+      - delay: "00:00:02"
+      - service: homeassistant.update_entity
+        target:
+          entity_id:
+            - sensor.security_core_selected_pretty_device_whitelist
+            - sensor.security_core_selected_pretty_device_blacklist
+            - sensor.security_core_selected_pretty_device_acl_comment
+            - sensor.security_core_selected_pretty_device_effective_status
+      - delay: "00:00:01"
+      - service: automation.trigger
+        target:
+          entity_id: automation.security_core_refresh_policy_template_selector
+      - service: script.security_core_reload_policy_acl_comment
+
+  security_core_apply_policy_selected:
+    alias: "Security Core Apply Policy Selected"
+    mode: restart
+    sequence:
+      - variables:
+          device_id: "{{ states('sensor.security_core_selected_pretty_device_id') }}"
+          policy_name: "{{ states('input_select.security_core_policy_template_select') }}"
+      - condition: template
+        value_template: "{{ device_id not in ['unknown', '', none] and policy_name not in ['unknown', '', none, 'No policies'] }}"
+      - service: rest_command.security_core_assign_policy_selected
+        data:
+          device_id: "{{ device_id }}"
+          policy_name: "{{ policy_name }}"
+      - delay: "00:00:02"
+      - service: script.security_core_refresh_dashboard_entities
+      - service: script.security_core_refresh_policy_entities
+      - delay: "00:00:02"
+      - service: script.security_core_reload_policy_acl_comment
+      - delay: "00:00:03"
+      - service: script.security_core_refresh_dashboard_entities
+      - service: script.security_core_refresh_policy_entities
+      - delay: "00:00:02"
+      - service: script.security_core_reload_policy_acl_comment
+
+  security_core_clear_policy_selected:
+    alias: "Security Core Clear Policy Selected"
+    mode: restart
+    sequence:
+      - variables:
+          device_id: "{{ states('sensor.security_core_selected_pretty_device_id') }}"
+      - condition: template
+        value_template: "{{ device_id not in ['unknown', '', none] }}"
+      - service: rest_command.security_core_clear_policy_selected
+        data:
+          device_id: "{{ device_id }}"
+      - delay: "00:00:02"
+      - service: script.security_core_refresh_dashboard_entities
+      - service: script.security_core_refresh_policy_entities
+      - delay: "00:00:03"
+      - service: script.security_core_refresh_dashboard_entities
+      - service: script.security_core_refresh_policy_entities
+      - delay: "00:00:02"
+      - service: script.security_core_reload_policy_acl_comment
+
+  security_core_whitelist_selected_device:
+    alias: "Security Core Whitelist Selected Device"
+    mode: restart
+    sequence:
+      - variables:
+          device_id: "{{ states('sensor.security_core_selected_pretty_device_id') }}"
+          by: "{{ states('input_select.security_core_acl_apply_by') }}"
+          comment: "{{ states('input_text.security_core_policy_acl_comment') }}"
+      - condition: template
+        value_template: "{{ device_id not in ['unknown', '', none] }}"
+      - service: rest_command.security_core_whitelist_selected
+        data:
+          device_id: "{{ device_id }}"
+          by: "{{ by }}"
+          comment: "{{ comment if comment not in ['', 'unknown', 'unavailable', '(empty value)', 'empty value'] else none }}"
+      - delay: "00:00:02"
+      - service: script.security_core_refresh_dashboard_entities
+      - service: script.security_core_refresh_policy_entities
+      - delay: "00:00:03"
+      - service: script.security_core_refresh_dashboard_entities
+      - service: script.security_core_refresh_policy_entities
+      - delay: "00:00:02"
+      - service: script.security_core_reload_policy_acl_comment
+
+  security_core_blacklist_selected_device:
+    alias: "Security Core Blacklist Selected Device"
+    mode: restart
+    sequence:
+      - variables:
+          device_id: "{{ states('sensor.security_core_selected_pretty_device_id') }}"
+          by: "{{ states('input_select.security_core_acl_apply_by') }}"
+          comment: "{{ states('input_text.security_core_policy_acl_comment') }}"
+      - condition: template
+        value_template: "{{ device_id not in ['unknown', '', none] }}"
+      - service: rest_command.security_core_blacklist_selected
+        data:
+          device_id: "{{ device_id }}"
+          by: "{{ by }}"
+          comment: "{{ comment if comment not in ['', 'unknown', 'unavailable', '(empty value)', 'empty value'] else none }}"
+      - delay: "00:00:02"
+      - service: script.security_core_refresh_dashboard_entities
+      - service: script.security_core_refresh_policy_entities
+      - delay: "00:00:03"
+      - service: script.security_core_refresh_dashboard_entities
+      - service: script.security_core_refresh_policy_entities
+      - delay: "00:00:02"
+      - service: script.security_core_reload_policy_acl_comment
+
+  security_core_clear_selected_acl:
+    alias: "Security Core Clear Selected ACL"
+    mode: restart
+    sequence:
+      - variables:
+          device_id: "{{ states('sensor.security_core_selected_pretty_device_id') }}"
+          by: "{{ states('input_select.security_core_acl_apply_by') }}"
+      - condition: template
+        value_template: "{{ device_id not in ['unknown', '', none] }}"
+      - service: rest_command.security_core_clear_acl_selected
+        data:
+          device_id: "{{ device_id }}"
+          by: "{{ by }}"
+      - delay: "00:00:01"
+      - service: homeassistant.update_entity
+        target:
+          entity_id:
+            - sensor.security_core_access_control_lists_raw
+            - sensor.security_core_total_policies
+            - sensor.security_core_manual_assigned_devices
+            - sensor.security_core_auto_assigned_devices
+            - sensor.security_core_whitelisted_devices
+            - sensor.security_core_blacklisted_devices
+            - sensor.security_core_local_only_devices
+            - sensor.security_core_geo_restricted_devices
+            - sensor.security_core_upnp_blocked_devices
+      - service: script.security_core_refresh_dashboard_entities
+      - service: script.security_core_refresh_policy_entities

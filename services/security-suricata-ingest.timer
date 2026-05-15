@@ -1,0 +1,12 @@
+[Unit]
+Description=Run security-core Suricata alert ingest every minute
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=60s
+Persistent=true
+RandomizedDelaySec=10s
+Unit=security-suricata-ingest.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run security-core inventory enrichment every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=security-inventory-enrich.service
+
+[Install]
+WantedBy=timers.target

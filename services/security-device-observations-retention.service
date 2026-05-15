@@ -1,0 +1,8 @@
+[Unit]
+Description=security-core device_observations retention cleanup
+After=postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/security-core/scripts/device_observations_retention.sh

@@ -1,0 +1,15 @@
+[Unit]
+Description=security-core inventory enrichment worker
+After=network-online.target security-api.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=securitycore
+Group=securitycore
+EnvironmentFile=/etc/security-core/security-core.env
+WorkingDirectory=/opt/security-core
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/enrich_inventory.py
+
+[Install]
+WantedBy=multi-user.target

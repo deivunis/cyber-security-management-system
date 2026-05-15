@@ -1,0 +1,12 @@
+[Unit]
+Description=security-core nightly deep scan worker
+After=network-online.target security-api.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/security-core/security-core.env
+WorkingDirectory=/opt/security-core
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/discovery_nightly_deep_scan.py

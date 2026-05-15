@@ -1,0 +1,12 @@
+[Unit]
+Description=Run security-core UPnP monitor every minute
+
+[Timer]
+OnBootSec=120s
+OnUnitActiveSec=60s
+Persistent=true
+RandomizedDelaySec=15s
+Unit=security-upnp-monitor.service
+
+[Install]
+WantedBy=timers.target

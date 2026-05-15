@@ -1,0 +1,16 @@
+[Unit]
+Description=security-core Phase 7 packet capture request processor/finalizer
+After=postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/security-core/security-core.env
+Environment=PYTHONPATH=/opt/security-core/app/worker:/opt/security-core/app
+WorkingDirectory=/opt/security-core/app/worker
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/capture_worker.py process-requests --limit 5
+# Critical: tcpdump is intentionally left running after this oneshot exits.
+# Without this, systemd kills the child process at service shutdown and captures end early/empty.
+KillMode=process

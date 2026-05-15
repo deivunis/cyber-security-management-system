@@ -1,0 +1,10 @@
+[Unit]
+Description=Run device_observations retention cleanup daily
+
+[Timer]
+OnCalendar=*-*-* 04:10:00
+Persistent=true
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target

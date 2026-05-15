@@ -1,0 +1,16 @@
+[Unit]
+Description=security-core Phase 7 notification worker
+Wants=network-online.target
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+User=securitycore
+Group=securitycore
+EnvironmentFile=/etc/security-core/security-core.env
+Environment=PYTHONPATH=/opt/security-core/app/worker:/opt/security-core/app
+WorkingDirectory=/opt/security-core/app/worker
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/notification_worker.py run
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full

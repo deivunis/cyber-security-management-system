@@ -1,0 +1,13 @@
+[Unit]
+Description=Run security-core Phase 6 response engine every minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=60s
+AccuracySec=10s
+Persistent=true
+RandomizedDelaySec=10s
+Unit=security-response-engine.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run security-core policy enforcer every minute
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=60s
+Persistent=true
+Unit=security-policy-enforcer.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,73 @@
+rest:
+  - resource: "http://REDACTED/api/v1/stats/policies"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 5
+    sensor:
+      - name: "Security Core Total Policies"
+        unique_id: security_core_total_policies
+        value_template: "{{ value_json.total_policies }}"
+      - name: "Security Core Manual Assigned Devices"
+        unique_id: security_core_manual_assigned_devices
+        value_template: "{{ value_json.manual_assigned_devices }}"
+      - name: "Security Core Auto Assigned Devices"
+        unique_id: security_core_auto_assigned_devices
+        value_template: "{{ value_json.auto_assigned_devices }}"
+      - name: "Security Core Whitelisted Devices"
+        unique_id: security_core_whitelisted_devices
+        value_template: "{{ value_json.whitelisted_devices }}"
+      - name: "Security Core Blacklisted Devices"
+        unique_id: security_core_blacklisted_devices
+        value_template: "{{ value_json.blacklisted_devices }}"
+      - name: "Security Core Local Only Devices"
+        unique_id: security_core_local_only_devices
+        value_template: "{{ value_json.local_only_devices }}"
+      - name: "Security Core Geo Restricted Devices"
+        unique_id: security_core_geo_restricted_devices
+        value_template: "{{ value_json.geo_restricted_devices }}"
+      - name: "Security Core UPNP Blocked Devices"
+        unique_id: security_core_upnp_blocked_devices
+        value_template: "{{ value_json.upnp_blocked_devices }}"
+
+  - resource: "http://REDACTED/api/v1/policies"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 5
+    sensor:
+      - name: "Security Core Policy Templates Raw"
+        unique_id: security_core_policy_templates_raw
+        value_template: >-
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set count = items | length %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% if count > 0 %}
+            {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+            {{ count ~ '|' ~ latest }}
+          {% else %}
+            0|none
+          {% endif %}
+        json_attributes:
+          - items
+
+  - resource: "http://REDACTED/api/v1/access-control-lists"
+    method: GET
+    headers:
+      Authorization: !secret security_core_api_bearer
+    scan_interval: 5
+    sensor:
+      - name: "Security Core Access Control Lists Raw"
+        unique_id: security_core_access_control_lists_raw
+        value_template: >-
+          {% set items = value_json['items'] if value_json is mapping and 'items' in value_json else [] %}
+          {% set count = items | length %}
+          {% set latest_list = items | map(attribute='updated_at') | reject('equalto', none) | list %}
+          {% if count > 0 %}
+            {% set latest = latest_list | max if latest_list | length > 0 else 'none' %}
+            {{ count ~ '|' ~ latest }}
+          {% else %}
+            0|none
+          {% endif %}
+        json_attributes:
+          - items

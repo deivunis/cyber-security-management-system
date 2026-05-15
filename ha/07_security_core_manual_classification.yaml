@@ -1,0 +1,284 @@
+input_boolean:
+  security_core_manual_form_dirty:
+    name: "Security Core Manual Form Dirty"
+    initial: false
+
+rest_command:
+  security_core_set_manual_classification:
+    url: "http://REDACTED/api/v1/devices/{{ device_id }}/manual-classification"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: >-
+      {{ {
+        "manual_vendor": vendor | default(none, true),
+        "manual_model": model | default(none, true),
+        "manual_category": category | default(none, true),
+        "manual_firmware_version": firmware | default(none, true),
+        "manual_hardware_version": hardware | default(none, true),
+        "manual_serial_number": serial | default(none, true)
+      } | tojson }}
+
+  security_core_clear_manual_classification:
+    url: "http://REDACTED/api/v1/devices/{{ device_id }}/manual-classification/clear"
+    method: POST
+    headers:
+      Authorization: !secret security_core_api_bearer
+      Content-Type: "application/json"
+    payload: "{}"
+
+input_select:
+  security_core_manual_category:
+    name: "Security Core Manual Category"
+    options:
+      - unassigned
+      - access_point
+      - appliance
+      - assistant_speaker
+      - camera
+      - desktop_pc
+      - developer_board
+      - docking_station
+      - doorbell
+      - firewall_router
+      - game_console
+      - home_automation_server
+      - hub_gateway
+      - hypervisor_server
+      - iot_controller
+      - laptop_pc
+      - mobile_phone
+      - nas_server
+      - network_bridge
+      - network_device
+      - printer
+      - raspberry_pi_host
+      - robot_vacuum
+      - security_core_server
+      - sensor
+      - smart_door_controller
+      - smart_light
+      - smart_lock
+      - smart_plug
+      - smart_watch
+      - streaming_device
+      - switch
+      - tablet
+      - thermostat_hvac
+      - tv_media
+      - unknown
+      - unknown_iot
+      - unknown_mobile_endpoint
+      - voice_assistant_display
+      - weather_station
+      - zigbee_thread_border_router
+    initial: unassigned
+    icon: mdi:tag
+
+input_text:
+  security_core_manual_vendor:
+    name: "Security Core Manual Vendor"
+    max: 100
+  security_core_manual_model:
+    name: "Security Core Manual Model"
+    max: 100
+  security_core_manual_firmware:
+    name: "Security Core Manual Firmware"
+    max: 100
+  security_core_manual_hardware:
+    name: "Security Core Manual Hardware"
+    max: 100
+  security_core_manual_serial:
+    name: "Security Core Manual Serial"
+    max: 100
+
+script:
+  security_core_reload_manual_classification_form:
+    alias: "Security Core Reload Manual Classification Form"
+    mode: restart
+    sequence:
+      - variables:
+          device_id: "{{ states('sensor.security_core_selected_pretty_device_id') }}"
+          items: "{{ state_attr('sensor.security_core_inventory_raw', 'items') or [] }}"
+          matched: >
+            {% set ns = namespace(item=None) %}
+            {% for item in items %}
+              {% if item.get('id') == device_id %}
+                {% set ns.item = item %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.item | tojson }}
+      - variables:
+          item: "{{ matched | from_json if matched not in ['', 'null', none] else {} }}"
+          manual_vendor: >
+            {% if item %}
+              {{ item.get('manual_vendor') if item.get('manual_vendor') not in [none, 'None', ''] else (item.get('vendor') if item.get('vendor') not in [none, 'None'] else '') }}
+            {% else %}
+              {{ '' }}
+            {% endif %}
+          manual_model: >
+            {% if item %}
+              {{ item.get('manual_model') if item.get('manual_model') not in [none, 'None', ''] else (item.get('model') if item.get('model') not in [none, 'None'] else '') }}
+            {% else %}
+              {{ '' }}
+            {% endif %}
+          manual_category: >
+            {% if item %}
+              {{ item.get('manual_category') if item.get('manual_category') not in [none, 'None', ''] else (item.get('category') if item.get('category') not in [none, 'None'] else '') }}
+            {% else %}
+              {{ '' }}
+            {% endif %}
+          manual_firmware: >
+            {% if item %}
+              {{ item.get('manual_firmware_version') if item.get('manual_firmware_version') not in [none, 'None', ''] else (item.get('firmware_version') if item.get('firmware_version') not in [none, 'None'] else '') }}
+            {% else %}
+              {{ '' }}
+            {% endif %}
+          manual_hardware: >
+            {% if item %}
+              {{ item.get('manual_hardware_version') if item.get('manual_hardware_version') not in [none, 'None', ''] else (item.get('hardware_version') if item.get('hardware_version') not in [none, 'None'] else '') }}
+            {% else %}
+              {{ '' }}
+            {% endif %}
+          manual_serial: >
+            {% if item %}
+              {{ item.get('manual_serial_number') if item.get('manual_serial_number') not in [none, 'None', ''] else (item.get('serial_number') if item.get('serial_number') not in [none, 'None'] else '') }}
+            {% else %}
+              {{ '' }}
+            {% endif %}
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_manual_vendor
+        data:
+          value: "{{ manual_vendor if manual_vendor not in [none, 'None'] else '' }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_manual_model
+        data:
+          value: "{{ manual_model if manual_model not in [none, 'None'] else '' }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_manual_firmware
+        data:
+          value: "{{ manual_firmware if manual_firmware not in [none, 'None'] else '' }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_manual_hardware
+        data:
+          value: "{{ manual_hardware if manual_hardware not in [none, 'None'] else '' }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.security_core_manual_serial
+        data:
+          value: "{{ manual_serial if manual_serial not in [none, 'None'] else '' }}"
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.security_core_manual_category
+        data:
+          option: >
+            {% set category = manual_category if manual_category not in [none, 'None', ''] else 'unassigned' %}
+            {% set opts = state_attr('input_select.security_core_manual_category', 'options') or ['unassigned'] %}
+            {{ category if category in opts else 'unassigned' }}
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.security_core_manual_form_dirty
+
+  security_core_apply_manual_classification_selected:
+    alias: "Security Core Apply Manual Classification"
+    mode: restart
+    sequence:
+      - variables:
+          device_id: "{{ states('sensor.security_core_selected_pretty_device_id') }}"
+          vendor: "{{ states('input_text.security_core_manual_vendor') }}"
+          model: "{{ states('input_text.security_core_manual_model') }}"
+          category_raw: "{{ states('input_select.security_core_manual_category') }}"
+          firmware: "{{ states('input_text.security_core_manual_firmware') }}"
+          hardware: "{{ states('input_text.security_core_manual_hardware') }}"
+          serial: "{{ states('input_text.security_core_manual_serial') }}"
+          category: "{{ none if category_raw in ['unassigned', '', 'unknown'] else category_raw }}"
+      - condition: template
+        value_template: "{{ device_id not in ['unknown', '', none] }}"
+      - service: rest_command.security_core_set_manual_classification
+        data:
+          device_id: "{{ device_id }}"
+          vendor: "{{ vendor if vendor not in ['', 'unknown', 'Unknown', 'unavailable'] else none }}"
+          model: "{{ model if model not in ['', 'unknown', 'Unknown', 'unavailable'] else none }}"
+          category: "{{ category }}"
+          firmware: "{{ firmware if firmware not in ['', 'unknown', 'Unknown', 'unavailable'] else none }}"
+          hardware: "{{ hardware if hardware not in ['', 'unknown', 'Unknown', 'unavailable'] else none }}"
+          serial: "{{ serial if serial not in ['', 'unknown', 'Unknown', 'unavailable'] else none }}"
+      - delay: "00:00:01"
+      - service: script.security_core_refresh_dashboard_entities
+      - delay: "00:00:01"
+      - service: script.security_core_reload_manual_classification_form
+      - delay: "00:00:01"
+      - service: script.security_core_refresh_dashboard_entities
+
+  security_core_clear_manual_classification_selected:
+    alias: "Security Core Clear Manual Classification"
+    mode: restart
+    sequence:
+      - variables:
+          device_id: "{{ states('sensor.security_core_selected_pretty_device_id') }}"
+      - condition: template
+        value_template: "{{ device_id not in ['unknown', '', none] }}"
+      - service: rest_command.security_core_clear_manual_classification
+        data:
+          device_id: "{{ device_id }}"
+      - delay: "00:00:01"
+      - service: input_text.set_value
+        target:
+          entity_id:
+            - input_text.security_core_manual_vendor
+            - input_text.security_core_manual_model
+            - input_text.security_core_manual_firmware
+            - input_text.security_core_manual_hardware
+            - input_text.security_core_manual_serial
+        data:
+          value: ""
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.security_core_manual_category
+        data:
+          option: unassigned
+      - service: script.security_core_refresh_dashboard_entities
+      - delay: "00:00:01"
+      - service: script.security_core_reload_manual_classification_form
+      - delay: "00:00:01"
+      - service: script.security_core_refresh_dashboard_entities
+
+automation:
+  - alias: "Security Core: mark manual classification form dirty"
+    id: security_core_mark_manual_classification_form_dirty
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id:
+          - input_text.security_core_manual_vendor
+          - input_text.security_core_manual_model
+          - input_text.security_core_manual_firmware
+          - input_text.security_core_manual_hardware
+          - input_text.security_core_manual_serial
+          - input_select.security_core_manual_category
+    condition:
+      - condition: state
+        entity_id: input_boolean.security_core_manual_form_dirty
+        state: "off"
+    action:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.security_core_manual_form_dirty
+
+  - alias: "Security Core: load manual classification fields on device change"
+    id: security_core_load_manual_classification_fields_on_device_change
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.security_core_selected_pretty_device_id
+          - sensor.security_core_inventory_raw
+      - platform: homeassistant
+        event: start
+    action:
+      - service: script.security_core_reload_manual_classification_form

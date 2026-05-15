@@ -1,0 +1,8 @@
+[Unit]
+Description=security-core device_observations weekly VACUUM FULL
+After=postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/security-core/scripts/device_observations_vacuum_full.sh

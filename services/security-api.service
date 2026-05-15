@@ -1,0 +1,17 @@
+[Unit]
+Description=security-core FastAPI backend
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=securitycore
+Group=securitycore
+WorkingDirectory=/opt/security-core/app
+EnvironmentFile=/etc/security-core/security-core.env
+Environment=PYTHONPATH=/opt/security-core/app
+ExecStart=/opt/security-core/venv/bin/uvicorn api.main:app --host 192.168.1.7 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

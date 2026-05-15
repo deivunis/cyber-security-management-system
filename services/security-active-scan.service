@@ -1,0 +1,17 @@
+[Unit]
+Description=security-core active inventory scan worker
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/opt/security-core/app
+EnvironmentFile=/etc/security-core/security-core.env
+Environment=PYTHONPATH=/opt/security-core/app
+ExecStartPre=/usr/bin/test -x /usr/bin/nmap
+ExecStart=/opt/security-core/venv/bin/python /opt/security-core/app/worker/discovery_active_scan.py
+
+[Install]
+WantedBy=multi-user.target
